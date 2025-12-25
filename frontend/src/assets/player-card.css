@@ -1,0 +1,205 @@
+.player-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: 12px;
+  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background-size: 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.player-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.player-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 10px 40px rgba(0, 212, 255, 0.15);
+}
+.player-card:hover::before { opacity: 1; }
+.player-card.rsci {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+}
+.player-card.rsci::before {
+  background: linear-gradient(90deg, var(--accent-gold), #ff8800);
+  opacity: 1;
+}
+.card-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.card-rank {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--accent-cyan);
+  text-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+  min-width: 2.5rem;
+}
+.player-card.rsci .card-rank { color: var(--accent-gold); }
+.game-rank {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.05);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+}
+.ez-scores {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.ez-score {
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  text-align: center;
+  min-width: 2.5rem;
+}
+.ez-labels {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+}
+.ez-labels span {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  width: 2.5rem;
+  text-align: center;
+}
+.card-player-info {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.player-link { text-decoration: none; text-align: center; }
+.player-photo {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 2px solid var(--border-glow);
+  object-fit: cover;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.15));
+  transition: all 0.3s ease;
+}
+.player-card:hover .player-photo {
+  border-color: var(--accent-cyan);
+  filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.5));
+}
+.player-card.rsci:hover .player-photo {
+  border-color: var(--accent-gold);
+  filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));
+}
+.player-name-photo {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  margin-top: 0.25rem;
+}
+.jersey {
+  color: var(--accent-gold);
+  font-family: 'Orbitron', sans-serif;
+}
+.player-details { flex: 1; }
+.player-meta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.player-meta .team {
+  color: var(--accent-cyan);
+  font-weight: 600;
+}
+.rsci-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--accent-gold), #ff8800);
+  color: var(--bg-dark);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  margin-top: 0.25rem;
+}
+.elo-badge {
+  display: inline-block;
+  background: rgba(0, 212, 255, 0.12);
+  color: var(--accent-cyan);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  margin-top: 0.25rem;
+  border: 1px solid var(--accent-cyan);
+}
+.game-info {
+  background: rgba(0,0,0,0.3);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-cyan);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.game-info .win { color: #00ff88; }
+.game-info .loss { color: #ff3366; }
+.game-info .opponent { color: var(--text-primary); font-weight: 600; }
+.game-info a { color: var(--accent-cyan); text-decoration: none; font-weight: 600; }
+.notable-up {
+  font-size: 0.5em;
+  vertical-align: middle;
+  color: #00ff88;
+}
+.stats-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 3px;
+  margin-bottom: 6px;
+}
+.stats-table th {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  padding: 2px;
+}
+.stats-table td {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.3rem 0.25rem;
+  border-radius: 4px;
+}
+.pct-10 { background: #3d3d3d; color: var(--text-secondary); }
+.pct-20 { background: #4a4535; color: var(--text-secondary); }
+.pct-30 { background: #574d2d; color: var(--text-primary); }
+.pct-40 { background: #645525; color: var(--text-primary); }
+.pct-50 { background: #7a6b1a; color: var(--text-primary); }
+.pct-60 { background: #9a850f; color: var(--bg-dark); }
+.pct-70 { background: #b89c00; color: var(--bg-dark); }
+.pct-80 { background: #d4b200; color: var(--bg-dark); }
+.pct-90 { background: #e6c300; color: var(--bg-dark); }
+.pct-100 { background: #ffd700; color: var(--bg-dark); }

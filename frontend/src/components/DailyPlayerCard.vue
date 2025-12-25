@@ -1,0 +1,120 @@
+<script setup>
+import { computed } from 'vue'
+const props = defineProps({ 
+  player: Object,
+  gender: { type: String, default: 'men' }
+})
+const p = computed(() => props.player)
+const isRsci = computed(() => !!p.value.rsci_rank)
+const hasElo = computed(() => p.value.elo_rating != null)
+const espnPath = computed(() => props.gender === 'women' ? 'womens-college-basketball' : 'mens-college-basketball')
+const pct = (val) => `pct-${Math.round((val || 50) / 10) * 10}`
+const teamLogo = computed(() => p.value.team_logo)
+const cleanShot = (val) => val?.replace(/&nbsp;/g, '\u00A0') || ''
+const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }) : ''
+const birthplace = computed(() => p.value.city && p.value.state ? `${p.value.city}, ${p.value.state}` : null)
+const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25).toFixed(1) : null)
+</script>
+
+<template>
+  <div class="player-card" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('${teamLogo}')` }">
+    <div class="card-rank-row">
+      <span class="card-rank">{{ p.class_rank }}<span v-if="p.notable" class="notable-up">{{ p.notable }}</span></span>
+      <span class="game-rank">#{{ p.game_rank }}/{{ p.games }}</span>
+      <div class="ez-scores">
+        <span class="ez-score" :class="pct(p.ez_struct?.ezpctile)">{{ p.ez_struct?.ez?.toFixed(1) }}</span>
+        <span class="ez-score" :class="pct(p.ez_struct?.ez75pctile)">{{ p.ez_struct?.ez75?.toFixed(1) }}</span>
+      </div>
+    </div>
+    <div class="ez-labels"><span>EZ</span><span>EZ75</span></div>
+    <div class="card-player-info">
+      <a :href="`https://www.espn.com/${espnPath}/player/_/id/${p.player_id}`" class="player-link" target="_blank">
+        <img :src="p.headshot_href" class="player-photo" :alt="p.display_name">
+        <div class="player-name-photo"><span class="jersey">#{{ p.jersey }}</span> {{ p.display_name }}</div>
+      </a>
+      <div class="player-details">
+        <div class="player-meta">
+          {{ p.display_height }}<span v-if="p.display_weight"> / {{ p.display_weight }}</span><br>
+          {{ p.experience_display_value }} {{ p.position_display_name }}<br>
+          <span v-if="birthplace">{{ birthplace }}<br></span>
+          <span class="team">#{{ p.team_rank }} {{ p.team_location }} ({{ p.team_conf }})</span><br>
+          <span v-if="age">Age {{ age }}</span>
+        </div>
+        <span v-if="isRsci" class="rsci-badge">#{{ p.rsci_rank }} RSCI</span>
+        <span v-if="hasElo" class="elo-badge">Elo #{{ p.elo_rank }} • {{ p.elo_rating?.toFixed(0) }}</span>
+      </div>
+    </div>
+    <div class="game-info">
+      {{ p.starter ? 'Started' : 'Off bench' }} {{ p.minutes }}min 
+      <span :class="p.team_pts > p.opp_pts ? 'win' : 'loss'">{{ p.team_pts > p.opp_pts ? 'W' : 'L' }}</span>
+      {{ p.home ? 'vs' : '@' }} <span class="opponent">#{{ p.opp_rank }} {{ p.opp_location }}</span>
+      <a :href="`https://www.espn.com/${espnPath}/boxscore/_/gameId/${p.game_id}`" target="_blank">{{ p.team_pts }}-{{ p.opp_pts }}</a>
+      ({{ formatDate(p.date) }})
+    </div>
+    <table class="stats-table">
+      <thead>
+        <tr><th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td :class="pct(p.percentiles?.pts)">{{ p.usg_struct?.pts }}</td>
+          <td :class="pct(p.percentiles?.ast)">{{ p.stats?.ast }}</td>
+          <td :class="pct(p.percentiles?.tov)">{{ p.stats?.tov }}</td>
+          <td :class="pct(p.percentiles?.orb)">{{ p.stats?.orb }}</td>
+          <td :class="pct(p.percentiles?.drb)">{{ p.stats?.drb }}</td>
+          <td :class="pct(p.percentiles?.stl)">{{ p.stats?.stl }}</td>
+          <td :class="pct(p.percentiles?.blk)">{{ p.stats?.blk }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <table class="stats-table">
+      <thead>
+        <tr><th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td :class="pct(p.usg_struct?.usgpctile)">{{ p.usg_struct?.usg }}</td>
+          <td :class="pct(p.usg_struct?.tspctile)">{{ p.usg_struct?.ts }}</td>
+          <td :class="pct(p.usg_struct?.ppppctile)">{{ p.usg_struct?.ppp }}</td>
+          <td :class="pct(p.usg_struct?.astpctpctile)">{{ p.usg_struct?.astpct }}</td>
+          <td :class="pct(p.usg_struct?.tovpctpctile)">{{ p.usg_struct?.tovpct }}</td>
+          <td :class="pct(p.usg_struct?.orbpctpctile)">{{ p.usg_struct?.orbpct }}</td>
+          <td :class="pct(p.usg_struct?.drbpctpctile)">{{ p.usg_struct?.drbpct }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <table class="stats-table">
+      <thead>
+        <tr><th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td :class="pct(p.shots_struct?.dunkspctile)">{{ cleanShot(p.shots_struct?.dunks) }}</td>
+          <td :class="pct(p.shots_struct?.layupspctile)">{{ cleanShot(p.shots_struct?.layups) }}</td>
+          <td :class="pct(p.shots_struct?.midrangepctile)">{{ cleanShot(p.shots_struct?.midrange) }}</td>
+          <td :class="pct(p.shots_struct?.twospctile)">{{ cleanShot(p.shots_struct?.twos) }}</td>
+          <td :class="pct(p.shots_struct?.threespctile)">{{ cleanShot(p.shots_struct?.threes) }}</td>
+          <td :class="pct(p.shots_struct?.ftspctile)">{{ p.shots_struct?.fts }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <table v-if="p.assists" class="stats-table assist-table">
+      <thead>
+        <tr><th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="pct-50">{{ p.assists?.dunks }}</td>
+          <td class="pct-50">{{ p.assists?.layups }}</td>
+          <td class="pct-50">{{ p.assists?.midrange }}</td>
+          <td class="pct-50">{{ (p.assists?.dunks || 0) + (p.assists?.layups || 0) + (p.assists?.midrange || 0) }}</td>
+          <td class="pct-50">{{ p.assists?.threes }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<style scoped>
+@import '../assets/player-card.css';
+</style>

@@ -1,0 +1,3915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Lines! - NCAA Prospect Analytics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0e1a;
+            --bg-darker: #060810;
+            --bg-card: #111827;
+            --bg-card-hover: #1a2332;
+            --border-glow: #1e3a5f;
+            --accent-cyan: #00d4ff;
+            --accent-gold: #ffd700;
+            --accent-red: #ff3366;
+            --accent-green: #00ff88;
+            --accent-orange: #ff8800;
+            --text-primary: #e8f0ff;
+            --text-secondary: #8899aa;
+            --text-muted: #556677;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(0, 212, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(255, 51, 102, 0.03) 0%, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(to top, var(--bg-dark) 0%, transparent 100%);
+        }
+
+        @media (max-width: 768px) {
+            .hero-banner {
+                height: 120px;
+            }
+        }
+
+        /* Header / Navigation */
+        .header {
+            background: var(--bg-darker);
+            border-bottom: 1px solid var(--border-glow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 0.75rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+            -webkit-text-fill-color: var(--accent-cyan);
+        }
+
+        .nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-link {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .nav-link.active {
+            color: var(--accent-cyan);
+            background: rgba(0, 212, 255, 0.15);
+            border-color: var(--accent-cyan);
+        }
+
+        .gender-toggle {
+            display: flex;
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 4px;
+            border: 1px solid var(--border-glow);
+        }
+
+        .gender-btn {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.4rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .gender-btn.active {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+        }
+
+        .gender-btn:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Page Title */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Controls Bar */
+        .controls-bar {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .control-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .date-picker {
+            font-family: 'Share Tech Mono', monospace;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-glow);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .date-picker:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .range-toggle {
+            display: flex;
+            gap: 4px;
+        }
+
+        .range-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border-glow);
+            background: var(--bg-dark);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .range-btn:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .range-btn:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+
+        .range-btn.active {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            border-color: var(--accent-cyan);
+        }
+
+        .range-btn:hover:not(.active) {
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 2.5rem 0 1.5rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-glow);
+        }
+
+        .section-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0;
+        }
+
+        .section-header::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, var(--border-glow), transparent);
+        }
+
+        /* Player Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.25rem;
+        }
+
+        /* Player Card */
+        .player-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background-size: 50%;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .player-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .player-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.15);
+        }
+
+        .player-card:hover::before {
+            opacity: 1;
+        }
+
+        .player-card.rsci {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+        }
+
+        .player-card.rsci::before {
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-orange));
+            opacity: 1;
+        }
+
+        .card-rank-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-rank {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+            min-width: 2.5rem;
+        }
+
+        .game-rank {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+        }
+
+        .ez-scores {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .ez-score {
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .card-player-info {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .player-photo {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid var(--border-glow);
+            object-fit: cover;
+            filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.15));
+            transition: all 0.3s ease;
+        }
+
+        .player-card:hover .player-photo {
+            border-color: var(--accent-cyan);
+            filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.5));
+        }
+
+        .player-card.rsci:hover .player-photo {
+            border-color: var(--accent-gold);
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));
+        }
+
+        .player-details {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .player-name .jersey {
+            color: var(--accent-gold);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .player-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .player-meta .team {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .rsci-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
+            color: var(--bg-dark);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            margin-top: 0.25rem;
+        }
+
+        .game-info {
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-cyan);
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .game-info .win { color: #00ff88; }
+        .game-info .loss { color: #ff3366; }
+        .game-info .opponent { color: var(--text-primary); font-weight: 600; }
+        .game-info a { color: var(--accent-cyan); text-decoration: none; font-weight: 600; }
+
+        /* Card rank notable indicator */
+        .card-rank .notable-up {
+            font-size: 0.5em;
+            vertical-align: middle;
+        }
+
+        /* Stats Tables */
+        .stats-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 3px;
+            margin-bottom: 6px;
+        }
+
+        .stats-table th {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 2px;
+        }
+
+        .stats-table td {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 0.3rem 0.25rem;
+            border-radius: 4px;
+        }
+
+        /* Percentile coloring - matching email template exactly */
+        .pct-10 { background: #3d3d3d; color: var(--text-secondary); }
+        .pct-20 { background: #4a4535; color: var(--text-secondary); }
+        .pct-30 { background: #574d2d; color: var(--text-primary); }
+        .pct-40 { background: #645525; color: var(--text-primary); }
+        .pct-50 { background: #7a6b1a; color: var(--text-primary); }
+        .pct-60 { background: #9a850f; color: var(--bg-dark); }
+        .pct-70 { background: #b89c00; color: var(--bg-dark); }
+        .pct-80 { background: #d4b200; color: var(--bg-dark); }
+        .pct-90 { background: #e6c300; color: var(--bg-dark); }
+        .pct-100 { background: #ffd700; color: var(--bg-dark); }
+
+        /* Info Bar - Collapsible notes and legend */
+        .info-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            align-items: flex-start;
+        }
+
+        .info-toggle {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            padding: 0.4rem 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .info-toggle:hover {
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        .info-toggle .arrow {
+            transition: transform 0.2s ease;
+        }
+
+        .info-toggle.open .arrow {
+            transform: rotate(180deg);
+        }
+
+        .info-panel {
+            display: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+        }
+
+        .info-panel.open {
+            display: block;
+        }
+
+        .info-panel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .info-panel-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .notes-title {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.8rem;
+            margin: 0 0 0.5rem 0;
+            color: var(--text-muted);
+        }
+
+        .notes-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .notes-list li {
+            padding: 0.15rem 0;
+        }
+
+        .notes-list li::before {
+            content: '▸';
+            color: var(--accent-cyan);
+            margin-right: 0.4rem;
+        }
+
+        .notable-up {
+            color: var(--accent-green);
+            font-size: 0.8em;
+        }
+
+        .notable-down {
+            color: var(--accent-red);
+            font-size: 0.8em;
+        }
+
+        .gold-text {
+            color: var(--accent-gold);
+        }
+
+        .legend-desc {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .color-legend {
+            display: flex;
+            gap: 2px;
+        }
+
+        .color-legend > div {
+            flex: 1;
+            text-align: center;
+            padding: 0.3rem 0.15rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.65rem;
+            border-radius: 3px;
+        }
+
+        /* Class Tabs */
+        .class-tabs {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-glow);
+            padding-bottom: 0;
+        }
+
+        .class-tab {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .class-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .class-tab.active {
+            color: var(--accent-cyan);
+        }
+
+        .class-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-cyan);
+        }
+
+        .class-tab .count {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-left: 0.4rem;
+        }
+
+        .class-tab.active .count {
+            color: var(--accent-cyan);
+        }
+
+        .class-content {
+            display: none;
+        }
+
+        .class-content.active {
+            display: block;
+        }
+
+        /* Multi-select Dropdown */
+        .multiselect {
+            position: relative;
+            min-width: 180px;
+        }
+
+        .multiselect-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-glow);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .multiselect-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        .multiselect-btn .arrow {
+            font-size: 0.7rem;
+            transition: transform 0.2s ease;
+        }
+
+        .multiselect.open .multiselect-btn .arrow {
+            transform: rotate(180deg);
+        }
+
+        .multiselect-btn .count-badge {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        .multiselect-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 200;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .multiselect.open .multiselect-dropdown {
+            display: block;
+        }
+
+        .multiselect-search {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-glow);
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+        }
+
+        .multiselect-search input {
+            width: 100%;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.6rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-glow);
+            color: var(--text-primary);
+            border-radius: 4px;
+        }
+
+        .multiselect-search input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .multiselect-actions {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-glow);
+        }
+
+        .multiselect-actions button {
+            flex: 1;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.3rem 0.5rem;
+            background: transparent;
+            border: 1px solid var(--border-glow);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .multiselect-actions button:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .multiselect-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            font-size: 0.85rem;
+        }
+
+        .multiselect-option:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .multiselect-option input {
+            accent-color: var(--accent-cyan);
+        }
+
+        .multiselect-option.selected {
+            background: rgba(0, 212, 255, 0.15);
+        }
+
+        .multiselect-option .conf-logo {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+
+        /* Power conferences group */
+        .conf-group-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 0.5rem 0.75rem 0.25rem;
+            border-top: 1px solid var(--border-glow);
+        }
+
+        .conf-group-label:first-child {
+            border-top: none;
+        }
+
+        /* Toggle Switch */
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-glow);
+            border-radius: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 2px;
+            bottom: 2px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: var(--accent-gold);
+        }
+
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(20px);
+            background: var(--accent-gold);
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+        }
+
+        .toggle-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .toggle-label:hover {
+            color: var(--text-primary);
+        }
+
+        .toggle-label.active {
+            color: var(--accent-gold);
+        }
+
+        .toggle-label .rsci-icon {
+            color: var(--accent-gold);
+            font-size: 1rem;
+        }
+
+        /* Player link styling */
+        .player-link {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .player-name-photo {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 0.35rem;
+        }
+
+        .player-name-photo .jersey {
+            color: var(--accent-gold);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Assist distribution table */
+        .stats-table.assist-dist td {
+            background: var(--border-glow);
+            color: var(--text-primary);
+        }
+
+        /* EZ labels row for rankings */
+        .ez-labels {
+            display: flex;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-top: -0.5rem;
+            margin-bottom: 0.5rem;
+            padding-right: 0;
+        }
+
+        .ez-labels span {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            width: 2.5rem;
+            text-align: center;
+        }
+
+        /* Rankings card rank row adjustment */
+        #rankings .card-rank-row {
+            flex-wrap: wrap;
+        }
+
+        #rankings .ez-scores {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        #rankings .ez-score {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.4rem;
+            min-width: 2.5rem;
+        }
+
+        /* Voting Section */
+        .voting-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .voting-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .voting-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .voting-matchup {
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .voting-card {
+            flex: 1;
+            max-width: 350px;
+            min-width: 280px;
+            background: var(--bg-dark);
+            border: 2px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .voting-card:hover {
+            border-color: var(--accent-cyan);
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+        }
+
+        .voting-card:active {
+            transform: scale(0.98);
+        }
+
+        .voting-vs {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent-red);
+            display: flex;
+            align-items: center;
+        }
+
+        .voting-player-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid var(--border-glow);
+            margin: 0 auto 1rem;
+            display: block;
+            filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.15));
+            transition: all 0.3s ease;
+        }
+
+        .voting-card:hover .voting-player-photo {
+            border-color: var(--accent-cyan);
+            filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.6));
+        }
+
+        /* RSCI styling for voting cards */
+        .voting-card.rsci {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .voting-card.rsci::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-gold), #ff8800);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .voting-card.rsci:hover {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .voting-card.rsci:hover .voting-player-photo {
+            border-color: var(--accent-gold);
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.6));
+        }
+
+        .voting-rsci-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-gold), #ff8800);
+            color: var(--bg-dark);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        .voting-player-name {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .voting-player-meta {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .voting-skip {
+            margin-top: 2rem;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border: 1px solid var(--border-glow);
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .voting-skip:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        /* Crowd Rankings */
+        .crowd-rankings {
+            margin-top: 3rem;
+        }
+
+        .rankings-table {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        .rankings-table th {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding: 0.5rem 1rem;
+            text-align: left;
+        }
+
+        .rankings-table td {
+            background: var(--bg-dark);
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+
+        .rankings-table tr td:first-child {
+            border-radius: 8px 0 0 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .rankings-table tr td:last-child {
+            border-radius: 0 8px 8px 0;
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-secondary);
+        }
+
+        .rankings-table .elo {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 4rem;
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border-glow);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .main {
+                padding: 1rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .voting-matchup {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .voting-vs {
+                transform: rotate(90deg);
+            }
+        }
+
+        /* Tab content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+        <img src="top_lines_websplash.jpg" alt="Top Lines!" class="hero-image">
+        <div class="hero-overlay"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="#" class="logo">
+                <span class="logo-icon">⚡</span>
+                TOP LINES!
+            </a>
+            <nav class="nav">
+                <a href="#" class="nav-link active" data-tab="daily">Daily Reports</a>
+                <a href="#" class="nav-link" data-tab="rankings">Season Rankings</a>
+                <a href="#" class="nav-link" data-tab="voting">Prospect Voting</a>
+            </nav>
+            <div class="gender-toggle">
+                <button class="gender-btn active">Men</button>
+                <button class="gender-btn">Women</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Daily Reports Tab -->
+        <div id="daily" class="tab-content active">
+            <div class="page-header">
+                <h1 class="page-title">Daily Top Lines</h1>
+                <p class="page-subtitle">Best prospect performances from recent games</p>
+            </div>
+
+            <div class="controls-bar">
+                <div class="control-group">
+                    <span class="control-label">Date</span>
+                    <input type="date" class="date-picker" value="2025-12-20">
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Range</span>
+                    <div class="range-toggle">
+                        <button class="range-btn active">1 Day</button>
+                        <button class="range-btn">2 Days</button>
+                        <button class="range-btn">3 Days</button>
+                        <button class="range-btn">Week</button>
+                    </div>
+                </div>
+                <div class="control-group toggle-group">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="rsciToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <label for="rsciToggle" class="toggle-label">
+                        <span class="rsci-icon">★</span> RSCI Only
+                    </label>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Conference</span>
+                    <div class="multiselect" id="confFilter">
+                        <button class="multiselect-btn">
+                            <span class="label">All Conferences</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="multiselect-dropdown">
+                            <div class="multiselect-search">
+                                <input type="text" placeholder="Search conferences...">
+                            </div>
+                            <div class="multiselect-actions">
+                                <button class="select-all">Select All</button>
+                                <button class="select-none">Clear</button>
+                                <button class="select-power">Power 6</button>
+                            </div>
+                            <div class="multiselect-options">
+                                <div class="conf-group-label">Power Conferences</div>
+                                <label class="multiselect-option" data-conf="ACC">
+                                    <input type="checkbox" checked> ACC
+                                </label>
+                                <label class="multiselect-option" data-conf="Big 12">
+                                    <input type="checkbox" checked> Big 12
+                                </label>
+                                <label class="multiselect-option" data-conf="Big East">
+                                    <input type="checkbox" checked> Big East
+                                </label>
+                                <label class="multiselect-option" data-conf="Big Ten">
+                                    <input type="checkbox" checked> Big Ten
+                                </label>
+                                <label class="multiselect-option" data-conf="SEC">
+                                    <input type="checkbox" checked> SEC
+                                </label>
+                                <label class="multiselect-option" data-conf="WCC">
+                                    <input type="checkbox" checked> WCC
+                                </label>
+                                <div class="conf-group-label">Mid-Majors</div>
+                                <label class="multiselect-option" data-conf="A-10">
+                                    <input type="checkbox" checked> A-10
+                                </label>
+                                <label class="multiselect-option" data-conf="American">
+                                    <input type="checkbox" checked> American
+                                </label>
+                                <label class="multiselect-option" data-conf="ASUN">
+                                    <input type="checkbox" checked> ASUN
+                                </label>
+                                <label class="multiselect-option" data-conf="Big Sky">
+                                    <input type="checkbox" checked> Big Sky
+                                </label>
+                                <label class="multiselect-option" data-conf="Big South">
+                                    <input type="checkbox" checked> Big South
+                                </label>
+                                <label class="multiselect-option" data-conf="Big West">
+                                    <input type="checkbox" checked> Big West
+                                </label>
+                                <label class="multiselect-option" data-conf="CAA">
+                                    <input type="checkbox" checked> CAA
+                                </label>
+                                <label class="multiselect-option" data-conf="CUSA">
+                                    <input type="checkbox" checked> CUSA
+                                </label>
+                                <label class="multiselect-option" data-conf="Horizon">
+                                    <input type="checkbox" checked> Horizon
+                                </label>
+                                <label class="multiselect-option" data-conf="Ivy">
+                                    <input type="checkbox" checked> Ivy
+                                </label>
+                                <label class="multiselect-option" data-conf="MAAC">
+                                    <input type="checkbox" checked> MAAC
+                                </label>
+                                <label class="multiselect-option" data-conf="MAC">
+                                    <input type="checkbox" checked> MAC
+                                </label>
+                                <label class="multiselect-option" data-conf="MEAC">
+                                    <input type="checkbox" checked> MEAC
+                                </label>
+                                <label class="multiselect-option" data-conf="Mountain West">
+                                    <input type="checkbox" checked> Mountain West
+                                </label>
+                                <label class="multiselect-option" data-conf="MVC">
+                                    <input type="checkbox" checked> MVC
+                                </label>
+                                <label class="multiselect-option" data-conf="NEC">
+                                    <input type="checkbox" checked> NEC
+                                </label>
+                                <label class="multiselect-option" data-conf="OVC">
+                                    <input type="checkbox" checked> OVC
+                                </label>
+                                <label class="multiselect-option" data-conf="Patriot">
+                                    <input type="checkbox" checked> Patriot
+                                </label>
+                                <label class="multiselect-option" data-conf="SoCon">
+                                    <input type="checkbox" checked> SoCon
+                                </label>
+                                <label class="multiselect-option" data-conf="Southland">
+                                    <input type="checkbox" checked> Southland
+                                </label>
+                                <label class="multiselect-option" data-conf="Summit">
+                                    <input type="checkbox" checked> Summit
+                                </label>
+                                <label class="multiselect-option" data-conf="Sun Belt">
+                                    <input type="checkbox" checked> Sun Belt
+                                </label>
+                                <label class="multiselect-option" data-conf="SWAC">
+                                    <input type="checkbox" checked> SWAC
+                                </label>
+                                <label class="multiselect-option" data-conf="WAC">
+                                    <input type="checkbox" checked> WAC
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group" style="margin-left: auto;">
+                    <button class="info-toggle" id="infoToggle">
+                        <span class="arrow">▼</span> Notes & Legend
+                    </button>
+                </div>
+            </div>
+
+            <!-- Collapsible Info Panel -->
+            <div class="info-panel" id="infoPanel">
+                <div class="info-panel-grid">
+                    <div>
+                        <h3 class="notes-title">System Notes</h3>
+                        <ul class="notes-list">
+                            <li>Age calculated for Draft Night (June 2026)</li>
+                            <li>Game rank shown as #X/Y (Xth best game out of Y played)</li>
+                            <li><span class="notable-up">▲</span> = 1 std dev above avg &nbsp; <span class="notable-up">▲▲</span> = 2 std dev</li>
+                            <li>Unassisted makes shown as Xu (e.g., 3u = 3 unassisted)</li>
+                            <li><span class="gold-text">Gold border</span> = Top 100 RSCI recruit</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="notes-title">Color Legend</h3>
+                        <p class="legend-desc">Percentiles within class. Darker = lower, brighter gold = higher.</p>
+                        <div class="color-legend">
+                            <div class="pct-10">10%</div>
+                            <div class="pct-20">20%</div>
+                            <div class="pct-30">30%</div>
+                            <div class="pct-40">40%</div>
+                            <div class="pct-50">50%</div>
+                            <div class="pct-60">60%</div>
+                            <div class="pct-70">70%</div>
+                            <div class="pct-80">80%</div>
+                            <div class="pct-90">90%</div>
+                            <div class="pct-100">100%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Class Tabs -->
+            <div class="class-tabs">
+                <button class="class-tab active" data-class="freshmen">Freshmen <span class="count">(6)</span></button>
+                <button class="class-tab" data-class="sophomores">Sophomores <span class="count">(4)</span></button>
+                <button class="class-tab" data-class="juniors">Juniors <span class="count">(4)</span></button>
+                <button class="class-tab" data-class="seniors">Seniors <span class="count">(4)</span></button>
+            </div>
+
+            <!-- Freshmen Content -->
+            <div id="freshmen" class="class-content active">
+            <div class="cards-grid">
+                <!-- Player Card 1 - AJ Dybantsa -->
+                <div class="player-card rsci" data-rsci="true" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/252.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">1 <span class="notable-up">▲</span></span>
+                        <span class="game-rank">#2/11</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">18.9</span>
+                            <span class="ez-score pct-100">11.5</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/5142718" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5142718.png" class="player-photo" alt="AJ Dybantsa">
+                            <div class="player-name-photo"><span class="jersey">#3</span> AJ Dybantsa</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 9"<br>
+                                Freshman Forward<br>
+                                Brockton, MA<br>
+                                <span class="team">#5 BYU (Big 12)</span><br>
+                                Age 19.4
+                            </div>
+                            <span class="rsci-badge">#1 RSCI</span>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 36min <span class="win">W</span> vs <span class="opponent">#170 Abilene Christian</span>
+                        <a href="https://www.espn.com/mens-college-basketball/boxscore/_/gameId/401819840">85-67</a> (12/19)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">35</td>
+                            <td class="pct-70">4</td>
+                            <td class="pct-30">4</td>
+                            <td class="pct-50">2</td>
+                            <td class="pct-50">4</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-70">1</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">36</td>
+                            <td class="pct-100">84</td>
+                            <td class="pct-100">1.41</td>
+                            <td class="pct-100">28</td>
+                            <td class="pct-50">16</td>
+                            <td class="pct-70">6</td>
+                            <td class="pct-100">22</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">1-1 1u</td>
+                            <td class="pct-30">1-1 1u</td>
+                            <td class="pct-100">6-7 2u</td>
+                            <td class="pct-70">9-10 4u</td>
+                            <td class="pct-30">0-2 0u</td>
+                            <td class="pct-100">17-20</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>0</td>
+                            <td>2</td>
+                            <td>1</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 2 - Darius Acuff Jr. -->
+                <div class="player-card rsci" data-rsci="true" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/8.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">2 <span class="notable-up">▲</span></span>
+                        <span class="game-rank">#2/12</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">16.7</span>
+                            <span class="ez-score pct-100">10.5</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/5142620" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5142620.png" class="player-photo" alt="Darius Acuff Jr.">
+                            <div class="player-name-photo"><span class="jersey">#5</span> Darius Acuff Jr.</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 3" / 190 lbs<br>
+                                Freshman Guard<br>
+                                Detroit, MI<br>
+                                <span class="team">#40 Arkansas (SEC)</span>
+                            </div>
+                            <span class="rsci-badge">#10 RSCI</span>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 39min <span class="loss">L</span> vs <span class="opponent">#16 Houston</span>
+                        <a href="https://www.espn.com/mens-college-basketball/boxscore/_/gameId/401820294">85-94</a> (12/20)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">27</td>
+                            <td class="pct-100">7</td>
+                            <td class="pct-30">4</td>
+                            <td class="pct-50">1</td>
+                            <td class="pct-50">4</td>
+                            <td class="pct-70">1</td>
+                            <td class="pct-70">1</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">29</td>
+                            <td class="pct-80">65</td>
+                            <td class="pct-80">1.23</td>
+                            <td class="pct-100">38</td>
+                            <td class="pct-40">17</td>
+                            <td class="pct-50">3</td>
+                            <td class="pct-70">17</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-40">0-0 0u</td>
+                            <td class="pct-50">2-5 2u</td>
+                            <td class="pct-60">1-2 1u</td>
+                            <td class="pct-40">3-7 3u</td>
+                            <td class="pct-80">4-7 0u</td>
+                            <td class="pct-90">9-10</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td>5</td>
+                            <td>2</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 3 - Nolan Traore (not RSCI) -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/130.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">3</span>
+                        <span class="game-rank">#1/10</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-90">14.2</span>
+                            <span class="ez-score pct-80">9.8</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/5142648" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5142648.png" class="player-photo" alt="Nolan Traore">
+                            <div class="player-name-photo"><span class="jersey">#12</span> Nolan Traore</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 4" / 175 lbs<br>
+                                Freshman Guard<br>
+                                Paris, France<br>
+                                <span class="team">#1 Auburn (SEC)</span><br>
+                                Age 18.9
+                            </div>
+                            <span class="rsci-badge">#8 RSCI</span>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 28min <span class="win">W</span> vs <span class="opponent">#95 Richmond</span>
+                        <a href="#">72-58</a> (12/18)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-80">18</td>
+                            <td class="pct-90">9</td>
+                            <td class="pct-60">2</td>
+                            <td class="pct-30">0</td>
+                            <td class="pct-60">3</td>
+                            <td class="pct-90">3</td>
+                            <td class="pct-40">0</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-80">26</td>
+                            <td class="pct-70">62</td>
+                            <td class="pct-70">1.18</td>
+                            <td class="pct-100">48</td>
+                            <td class="pct-70">10</td>
+                            <td class="pct-20">0</td>
+                            <td class="pct-50">14</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-40">0-0 0u</td>
+                            <td class="pct-80">4-6 3u</td>
+                            <td class="pct-50">1-3 1u</td>
+                            <td class="pct-70">5-9 4u</td>
+                            <td class="pct-60">1-3 0u</td>
+                            <td class="pct-70">5-6</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>4</td>
+                            <td>0</td>
+                            <td>7</td>
+                            <td>2</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 4 - Cameron Boozer -->
+                <div class="player-card rsci" data-rsci="true" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/150.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">4</span>
+                        <span class="game-rank">#5/12</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">15.9</span>
+                            <span class="ez-score pct-100">13.7</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/5041935" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5041935.png" class="player-photo" alt="Cameron Boozer">
+                            <div class="player-name-photo"><span class="jersey">#12</span> Cameron Boozer</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 9" / 250 lbs<br>
+                                Freshman Forward<br>
+                                Miami, FL<br>
+                                <span class="team">#3 Duke (ACC)</span><br>
+                                Age 19.0
+                            </div>
+                            <span class="rsci-badge">#3 RSCI</span>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 36min <span class="loss">L</span> vs <span class="opponent">#42 Texas Tech</span>
+                        <a href="https://www.espn.com/mens-college-basketball/boxscore/_/gameId/401817237">81-82</a> (12/20)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">23</td>
+                            <td class="pct-100">7</td>
+                            <td class="pct-30">4</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-80">6</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-70">1</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">31</td>
+                            <td class="pct-70">67</td>
+                            <td class="pct-70">1.09</td>
+                            <td class="pct-100">39</td>
+                            <td class="pct-30">19</td>
+                            <td class="pct-70">7</td>
+                            <td class="pct-100">23</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-20">0-0 0u</td>
+                            <td class="pct-60">3-5 2u</td>
+                            <td class="pct-70">2-4 1u</td>
+                            <td class="pct-70">5-9 3u</td>
+                            <td class="pct-50">2-5 0u</td>
+                            <td class="pct-80">9-11</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>3</td>
+                            <td>0</td>
+                            <td>5</td>
+                            <td>2</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 5 - Semetri Carr -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/25.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">5 <span class="notable-up">▲</span></span>
+                        <span class="game-rank">#1/8</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">16.5</span>
+                            <span class="ez-score pct-100">6.4</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/5164560" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5164560.png" class="player-photo" alt="Semetri Carr">
+                            <div class="player-name-photo"><span class="jersey">#3</span> Semetri Carr</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 0" / 165 lbs<br>
+                                Freshman Guard<br>
+                                Mill Valley, CA<br>
+                                <span class="team">#106 California (ACC)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 36min <span class="win">W</span> vs <span class="opponent">#358 Morgan State</span>
+                        <a href="https://www.espn.com/mens-college-basketball/boxscore/_/gameId/401813282">97-50</a> (12/19)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-70">17</td>
+                            <td class="pct-100">9</td>
+                            <td class="pct-80">1</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-70">4</td>
+                            <td class="pct-100">3</td>
+                            <td class="pct-20">0</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-50">21</td>
+                            <td class="pct-70">65</td>
+                            <td class="pct-70">1.21</td>
+                            <td class="pct-100">37</td>
+                            <td class="pct-80">7</td>
+                            <td class="pct-70">6</td>
+                            <td class="pct-80">19</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-20">0-0 0u</td>
+                            <td class="pct-70">4-5 4u</td>
+                            <td class="pct-50">0-1 0u</td>
+                            <td class="pct-50">5-7 4u</td>
+                            <td class="pct-50">0-3 0u</td>
+                            <td class="pct-100">7-7</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>0</td>
+                            <td>2</td>
+                            <td>0</td>
+                            <td>2</td>
+                            <td>5</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 6 - Antonio Munoz -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/2755.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">6 <span class="notable-up">▲</span></span>
+                        <span class="game-rank">#1/10</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">16.0</span>
+                            <span class="ez-score pct-100">5.3</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/5314746" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5314746.png" class="player-photo" alt="Antonio Munoz">
+                            <div class="player-name-photo"><span class="jersey">#15</span> Antonio Munoz</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 6" / 180 lbs<br>
+                                Freshman Forward<br>
+                                Chicago, IL<br>
+                                <span class="team">#242 Grambling (SWAC)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 31min <span class="win">W</span> @ <span class="opponent">#209 Hampton</span>
+                        <a href="https://www.espn.com/mens-college-basketball/boxscore/_/gameId/401827091">81-72</a> (12/19)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">23</td>
+                            <td class="pct-100">5</td>
+                            <td class="pct-30">2</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-50">3</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-100">2</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">29</td>
+                            <td class="pct-100">76</td>
+                            <td class="pct-100">1.34</td>
+                            <td class="pct-100">31</td>
+                            <td class="pct-50">12</td>
+                            <td class="pct-70">8</td>
+                            <td class="pct-70">15</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">2-2 0u</td>
+                            <td class="pct-50">2-3 1u</td>
+                            <td class="pct-70">2-3 1u</td>
+                            <td class="pct-70">6-8 2u</td>
+                            <td class="pct-30">0-1 0u</td>
+                            <td class="pct-100">11-14</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>0</td>
+                            <td>4</td>
+                            <td>0</td>
+                            <td>4</td>
+                            <td>1</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            </div>
+
+            <!-- Sophomores Content -->
+            <div id="sophomores" class="class-content">
+            <div class="cards-grid">
+                <div class="player-card" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/2305.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">1 <span class="notable-up">▲▲</span></span>
+                        <span class="game-rank">#1/12</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">19.2</span>
+                            <span class="ez-score pct-90">12.1</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/4683853" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4683853.png" class="player-photo" alt="Kon Knueppel">
+                            <div class="player-name-photo"><span class="jersey">#5</span> Kon Knueppel</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 7" / 210 lbs<br>
+                                Sophomore Guard<br>
+                                Milwaukee, WI<br>
+                                <span class="team">#6 Duke (ACC)</span><br>
+                                Age 19.8
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 34min <span class="win">W</span> vs <span class="opponent">#42 Georgia Tech</span>
+                        <a href="#">76-64</a> (12/20)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">28</td>
+                            <td class="pct-80">5</td>
+                            <td class="pct-80">1</td>
+                            <td class="pct-60">1</td>
+                            <td class="pct-80">7</td>
+                            <td class="pct-70">1</td>
+                            <td class="pct-50">0</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-90">31</td>
+                            <td class="pct-100">78</td>
+                            <td class="pct-100">1.52</td>
+                            <td class="pct-80">26</td>
+                            <td class="pct-90">5</td>
+                            <td class="pct-50">4</td>
+                            <td class="pct-80">25</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-50">0-0 0u</td>
+                            <td class="pct-80">3-4 2u</td>
+                            <td class="pct-70">2-3 1u</td>
+                            <td class="pct-80">5-7 3u</td>
+                            <td class="pct-90">5-8 1u</td>
+                            <td class="pct-80">3-4</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>0</td>
+                            <td>3</td>
+                            <td>2</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 2 - Paul McNeil Jr. -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/152.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">2 <span class="notable-up">▲▲</span></span>
+                        <span class="game-rank">#1/11</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">26.6</span>
+                            <span class="ez-score pct-100">7.5</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/4873151" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4873151.png" class="player-photo" alt="Paul McNeil Jr.">
+                            <div class="player-name-photo"><span class="jersey">#2</span> Paul McNeil Jr.</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 5" / 190 lbs<br>
+                                Sophomore Guard<br>
+                                Rockingham, NC<br>
+                                <span class="team">#29 NC State (ACC)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 27min <span class="win">W</span> vs <span class="opponent">#338 Texas Southern</span>
+                        <a href="https://www.espn.com/mens-college-basketball/boxscore/_/gameId/401817260">108-72</a> (12/17)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">32</td>
+                            <td class="pct-90">6</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-80">3</td>
+                            <td class="pct-80">5</td>
+                            <td class="pct-80">2</td>
+                            <td class="pct-60">1</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">38</td>
+                            <td class="pct-100">81</td>
+                            <td class="pct-100">1.48</td>
+                            <td class="pct-90">32</td>
+                            <td class="pct-70">11</td>
+                            <td class="pct-90">12</td>
+                            <td class="pct-80">22</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-80">1-1 0u</td>
+                            <td class="pct-90">5-6 4u</td>
+                            <td class="pct-60">1-2 1u</td>
+                            <td class="pct-90">7-9 5u</td>
+                            <td class="pct-70">3-5 1u</td>
+                            <td class="pct-100">9-10</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>3</td>
+                            <td>0</td>
+                            <td>4</td>
+                            <td>2</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 3 - Labaron Philon -->
+                <div class="player-card rsci" data-rsci="true" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/99.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">3 <span class="notable-up">▲</span></span>
+                        <span class="game-rank">#3/11</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">18.4</span>
+                            <span class="ez-score pct-90">9.2</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/4873246" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4873246.png" class="player-photo" alt="Labaron Philon">
+                            <div class="player-name-photo"><span class="jersey">#0</span> Labaron Philon</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 3" / 175 lbs<br>
+                                Sophomore Guard<br>
+                                Mobile, AL<br>
+                                <span class="team">#9 Alabama (SEC)</span>
+                            </div>
+                            <span class="rsci-badge">#15 RSCI</span>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 32min <span class="win">W</span> vs <span class="opponent">#112 LSU</span>
+                        <a href="#">86-68</a> (12/18)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-90">24</td>
+                            <td class="pct-80">5</td>
+                            <td class="pct-60">3</td>
+                            <td class="pct-50">1</td>
+                            <td class="pct-60">3</td>
+                            <td class="pct-90">3</td>
+                            <td class="pct-40">0</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-90">28</td>
+                            <td class="pct-80">68</td>
+                            <td class="pct-80">1.26</td>
+                            <td class="pct-80">25</td>
+                            <td class="pct-50">14</td>
+                            <td class="pct-50">4</td>
+                            <td class="pct-60">14</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-40">0-0 0u</td>
+                            <td class="pct-80">4-6 3u</td>
+                            <td class="pct-60">2-4 1u</td>
+                            <td class="pct-70">6-10 4u</td>
+                            <td class="pct-80">2-3 1u</td>
+                            <td class="pct-90">8-9</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>1</td>
+                            <td>4</td>
+                            <td>1</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 4 - Yaxel Lendeborg -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/127.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">4</span>
+                        <span class="game-rank">#2/10</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-90">15.8</span>
+                            <span class="ez-score pct-80">8.4</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="#" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4873160.png" class="player-photo" alt="Yaxel Lendeborg">
+                            <div class="player-name-photo"><span class="jersey">#11</span> Yaxel Lendeborg</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 7" / 205 lbs<br>
+                                Sophomore Forward<br>
+                                Santo Domingo, DR<br>
+                                <span class="team">#52 Michigan (Big Ten)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 30min <span class="win">W</span> vs <span class="opponent">#145 Toledo</span>
+                        <a href="#">74-58</a> (12/19)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-80">19</td>
+                            <td class="pct-70">4</td>
+                            <td class="pct-80">1</td>
+                            <td class="pct-90">4</td>
+                            <td class="pct-90">8</td>
+                            <td class="pct-60">1</td>
+                            <td class="pct-80">2</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-70">24</td>
+                            <td class="pct-90">72</td>
+                            <td class="pct-90">1.36</td>
+                            <td class="pct-70">22</td>
+                            <td class="pct-90">6</td>
+                            <td class="pct-100">15</td>
+                            <td class="pct-100">32</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">3-3 1u</td>
+                            <td class="pct-70">2-4 1u</td>
+                            <td class="pct-40">0-1 0u</td>
+                            <td class="pct-80">5-8 2u</td>
+                            <td class="pct-50">1-3 0u</td>
+                            <td class="pct-80">6-7</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>1</td>
+                            <td>0</td>
+                            <td>3</td>
+                            <td>1</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            </div>
+
+            <!-- Juniors Content -->
+            <div id="juniors" class="class-content">
+            <div class="cards-grid">
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/275.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">1</span>
+                        <span class="game-rank">#2/14</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-90">15.8</span>
+                            <span class="ez-score pct-80">10.2</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="#" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4433230.png" class="player-photo" alt="Mark Sears">
+                            <div class="player-name-photo"><span class="jersey">#1</span> Mark Sears</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 1" / 185 lbs<br>
+                                Junior Guard<br>
+                                Muscle Shoals, AL<br>
+                                <span class="team">#4 Alabama (SEC)</span><br>
+                                Age 22.4
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 35min <span class="win">W</span> vs <span class="opponent">#85 Kent State</span>
+                        <a href="#">88-72</a> (12/20)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-90">24</td>
+                            <td class="pct-80">6</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-40">0</td>
+                            <td class="pct-60">4</td>
+                            <td class="pct-80">2</td>
+                            <td class="pct-40">0</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-80">28</td>
+                            <td class="pct-90">71</td>
+                            <td class="pct-80">1.33</td>
+                            <td class="pct-90">32</td>
+                            <td class="pct-70">9</td>
+                            <td class="pct-30">0</td>
+                            <td class="pct-60">16</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-40">0-0 0u</td>
+                            <td class="pct-70">3-5 2u</td>
+                            <td class="pct-60">2-4 2u</td>
+                            <td class="pct-70">5-9 4u</td>
+                            <td class="pct-80">3-5 0u</td>
+                            <td class="pct-90">7-8</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>0</td>
+                            <td>4</td>
+                            <td>2</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 2 - Ryan Kalkbrenner -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/156.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">2 <span class="notable-up">▲</span></span>
+                        <span class="game-rank">#2/11</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-90">14.8</span>
+                            <span class="ez-score pct-80">9.6</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="#" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4433226.png" class="player-photo" alt="Ryan Kalkbrenner">
+                            <div class="player-name-photo"><span class="jersey">#11</span> Ryan Kalkbrenner</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                7' 1" / 270 lbs<br>
+                                Junior Center<br>
+                                St. Louis, MO<br>
+                                <span class="team">#18 Creighton (Big East)</span><br>
+                                Age 22.6
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 28min <span class="win">W</span> vs <span class="opponent">#68 UNLV</span>
+                        <a href="#">78-65</a> (12/19)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-80">18</td>
+                            <td class="pct-60">2</td>
+                            <td class="pct-90">0</td>
+                            <td class="pct-90">4</td>
+                            <td class="pct-80">6</td>
+                            <td class="pct-50">0</td>
+                            <td class="pct-100">5</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-70">24</td>
+                            <td class="pct-100">82</td>
+                            <td class="pct-100">1.50</td>
+                            <td class="pct-60">14</td>
+                            <td class="pct-100">0</td>
+                            <td class="pct-90">18</td>
+                            <td class="pct-80">28</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">4-4 2u</td>
+                            <td class="pct-60">2-3 0u</td>
+                            <td class="pct-40">0-1 0u</td>
+                            <td class="pct-80">6-8 2u</td>
+                            <td class="pct-30">0-0 0u</td>
+                            <td class="pct-80">6-8</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>0</td>
+                            <td>2</td>
+                            <td>0</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 3 - RJ Davis -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/153.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">3</span>
+                        <span class="game-rank">#4/13</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-80">13.2</span>
+                            <span class="ez-score pct-70">8.4</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="#" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4433250.png" class="player-photo" alt="RJ Davis">
+                            <div class="player-name-photo"><span class="jersey">#4</span> RJ Davis</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 0" / 180 lbs<br>
+                                Junior Guard<br>
+                                White Plains, NY<br>
+                                <span class="team">#14 UNC (ACC)</span><br>
+                                Age 22.8
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 36min <span class="win">W</span> vs <span class="opponent">#124 UCLA</span>
+                        <a href="#">76-68</a> (12/20)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-70">16</td>
+                            <td class="pct-90">7</td>
+                            <td class="pct-60">3</td>
+                            <td class="pct-40">0</td>
+                            <td class="pct-50">3</td>
+                            <td class="pct-80">2</td>
+                            <td class="pct-30">0</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-70">25</td>
+                            <td class="pct-60">58</td>
+                            <td class="pct-60">1.08</td>
+                            <td class="pct-100">35</td>
+                            <td class="pct-50">15</td>
+                            <td class="pct-20">0</td>
+                            <td class="pct-50">12</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-30">0-0 0u</td>
+                            <td class="pct-60">2-4 2u</td>
+                            <td class="pct-70">2-3 2u</td>
+                            <td class="pct-60">4-7 4u</td>
+                            <td class="pct-70">2-4 0u</td>
+                            <td class="pct-70">4-5</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>3</td>
+                            <td>1</td>
+                            <td>5</td>
+                            <td>2</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 4 - Jalen Wilson -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/2305.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">4</span>
+                        <span class="game-rank">#3/12</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-70">12.4</span>
+                            <span class="ez-score pct-70">7.8</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="#" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4433140.png" class="player-photo" alt="Jalen Wilson">
+                            <div class="player-name-photo"><span class="jersey">#10</span> Jalen Wilson</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 8" / 220 lbs<br>
+                                Junior Forward<br>
+                                Denton, TX<br>
+                                <span class="team">#11 Kansas (Big 12)</span><br>
+                                Age 22.5
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 34min <span class="win">W</span> vs <span class="opponent">#78 West Virginia</span>
+                        <a href="#">82-68</a> (12/19)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-70">15</td>
+                            <td class="pct-70">4</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-80">7</td>
+                            <td class="pct-70">1</td>
+                            <td class="pct-50">0</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-60">22</td>
+                            <td class="pct-70">64</td>
+                            <td class="pct-70">1.18</td>
+                            <td class="pct-70">21</td>
+                            <td class="pct-60">12</td>
+                            <td class="pct-70">8</td>
+                            <td class="pct-90">28</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-60">1-1 0u</td>
+                            <td class="pct-70">3-5 2u</td>
+                            <td class="pct-50">1-2 1u</td>
+                            <td class="pct-70">5-8 3u</td>
+                            <td class="pct-60">1-3 0u</td>
+                            <td class="pct-70">3-4</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>0</td>
+                            <td>3</td>
+                            <td>1</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            </div>
+
+            <!-- Seniors Content -->
+            <div id="seniors" class="class-content">
+            <div class="cards-grid">
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/130.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">1 <span class="notable-up">▲</span></span>
+                        <span class="game-rank">#3/14</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">18.4</span>
+                            <span class="ez-score pct-90">11.8</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="#" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4702656.png" class="player-photo" alt="Johni Broome">
+                            <div class="player-name-photo"><span class="jersey">#21</span> Johni Broome</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 10" / 235 lbs<br>
+                                Senior Center<br>
+                                Tampa, FL<br>
+                                <span class="team">#1 Auburn (SEC)</span><br>
+                                Age 23.1
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 32min <span class="win">W</span> vs <span class="opponent">#95 Richmond</span>
+                        <a href="#">72-58</a> (12/18)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-90">22</td>
+                            <td class="pct-70">3</td>
+                            <td class="pct-80">1</td>
+                            <td class="pct-100">6</td>
+                            <td class="pct-90">9</td>
+                            <td class="pct-60">1</td>
+                            <td class="pct-100">4</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-80">27</td>
+                            <td class="pct-90">74</td>
+                            <td class="pct-90">1.41</td>
+                            <td class="pct-60">16</td>
+                            <td class="pct-90">5</td>
+                            <td class="pct-100">22</td>
+                            <td class="pct-90">34</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">3-3 1u</td>
+                            <td class="pct-80">4-6 3u</td>
+                            <td class="pct-50">1-2 1u</td>
+                            <td class="pct-90">8-11 5u</td>
+                            <td class="pct-30">0-0 0u</td>
+                            <td class="pct-80">6-8</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>0</td>
+                            <td>2</td>
+                            <td>1</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 2 - Hunter Dickinson -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/2305.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">2</span>
+                        <span class="game-rank">#2/13</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-90">16.2</span>
+                            <span class="ez-score pct-80">10.4</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="#" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4432168.png" class="player-photo" alt="Hunter Dickinson">
+                            <div class="player-name-photo"><span class="jersey">#1</span> Hunter Dickinson</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                7' 2" / 265 lbs<br>
+                                Senior Center<br>
+                                Alexandria, VA<br>
+                                <span class="team">#11 Kansas (Big 12)</span><br>
+                                Age 24.0
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 30min <span class="win">W</span> vs <span class="opponent">#78 West Virginia</span>
+                        <a href="#">82-68</a> (12/19)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-90">20</td>
+                            <td class="pct-80">5</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-90">4</td>
+                            <td class="pct-100">11</td>
+                            <td class="pct-50">0</td>
+                            <td class="pct-90">3</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-80">26</td>
+                            <td class="pct-80">68</td>
+                            <td class="pct-80">1.25</td>
+                            <td class="pct-80">28</td>
+                            <td class="pct-60">11</td>
+                            <td class="pct-90">16</td>
+                            <td class="pct-100">38</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-80">2-2 0u</td>
+                            <td class="pct-80">4-7 3u</td>
+                            <td class="pct-60">1-2 1u</td>
+                            <td class="pct-80">7-11 4u</td>
+                            <td class="pct-50">1-2 0u</td>
+                            <td class="pct-70">4-6</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2</td>
+                            <td>0</td>
+                            <td>4</td>
+                            <td>1</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 3 - Tre Mitchell -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/275.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">3 <span class="notable-up">▲▲</span></span>
+                        <span class="game-rank">#1/12</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">19.8</span>
+                            <span class="ez-score pct-100">12.4</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="#" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4431725.png" class="player-photo" alt="Tre Mitchell">
+                            <div class="player-name-photo"><span class="jersey">#3</span> Tre Mitchell</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 9" / 225 lbs<br>
+                                Senior Forward<br>
+                                Pittsburgh, PA<br>
+                                <span class="team">#4 Alabama (SEC)</span><br>
+                                Age 23.5
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 34min <span class="win">W</span> vs <span class="opponent">#85 Kent State</span>
+                        <a href="#">88-72</a> (12/20)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">28</td>
+                            <td class="pct-60">2</td>
+                            <td class="pct-80">1</td>
+                            <td class="pct-80">3</td>
+                            <td class="pct-80">7</td>
+                            <td class="pct-70">1</td>
+                            <td class="pct-80">2</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-100">34</td>
+                            <td class="pct-100">78</td>
+                            <td class="pct-100">1.47</td>
+                            <td class="pct-50">12</td>
+                            <td class="pct-90">4</td>
+                            <td class="pct-80">12</td>
+                            <td class="pct-80">26</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-90">2-2 1u</td>
+                            <td class="pct-90">5-6 4u</td>
+                            <td class="pct-80">3-4 2u</td>
+                            <td class="pct-100">10-12 7u</td>
+                            <td class="pct-40">0-1 0u</td>
+                            <td class="pct-90">8-9</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>0</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>0</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Player Card 4 - Marcus Adams Jr. -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/156.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">4</span>
+                        <span class="game-rank">#4/11</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-80">13.6</span>
+                            <span class="ez-score pct-70">8.9</span>
+                        </div>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="#" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4432205.png" class="player-photo" alt="Marcus Adams Jr.">
+                            <div class="player-name-photo"><span class="jersey">#5</span> Marcus Adams Jr.</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 8" / 240 lbs<br>
+                                Senior Forward<br>
+                                Houston, TX<br>
+                                <span class="team">#18 Creighton (Big East)</span><br>
+                                Age 22.9
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-info">
+                        Started 28min <span class="win">W</span> vs <span class="opponent">#68 UNLV</span>
+                        <a href="#">78-65</a> (12/19)
+                    </div>
+                    <table class="stats-table">
+                        <tr>
+                            <th>pts</th><th>ast</th><th>tov</th><th>orb</th><th>drb</th><th>stl</th><th>blk</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-70">14</td>
+                            <td class="pct-60">2</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-70">2</td>
+                            <td class="pct-70">5</td>
+                            <td class="pct-80">2</td>
+                            <td class="pct-70">1</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-60">21</td>
+                            <td class="pct-70">65</td>
+                            <td class="pct-70">1.17</td>
+                            <td class="pct-50">12</td>
+                            <td class="pct-60">12</td>
+                            <td class="pct-70">10</td>
+                            <td class="pct-70">22</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr>
+                            <th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th>
+                        </tr>
+                        <tr>
+                            <td class="pct-70">1-1 0u</td>
+                            <td class="pct-70">3-5 2u</td>
+                            <td class="pct-60">1-2 1u</td>
+                            <td class="pct-70">5-8 3u</td>
+                            <td class="pct-50">1-2 0u</td>
+                            <td class="pct-60">2-3</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table assist-dist">
+                        <tr>
+                            <th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th>
+                        </tr>
+                        <tr>
+                            <td>0</td>
+                            <td>1</td>
+                            <td>0</td>
+                            <td>1</td>
+                            <td>1</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Season Rankings Tab -->
+        <div id="rankings" class="tab-content">
+            <div class="page-header">
+                <h1 class="page-title">Season Rankings</h1>
+                <p class="page-subtitle">Cumulative prospect rankings based on full season performance (Nov. 03 → Dec. 20)</p>
+            </div>
+
+            <div class="controls-bar">
+                <div class="control-group">
+                    <span class="control-label">As of</span>
+                    <input type="date" class="date-picker" value="2025-12-20">
+                </div>
+                <div class="control-group toggle-group">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="rsciToggleRankings">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <label for="rsciToggleRankings" class="toggle-label">
+                        <span class="rsci-icon">★</span> RSCI Only
+                    </label>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Conference</span>
+                    <div class="multiselect" id="confFilterRankings">
+                        <button class="multiselect-btn">
+                            <span class="label">All Conferences</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="multiselect-dropdown">
+                            <div class="multiselect-search">
+                                <input type="text" placeholder="Search conferences...">
+                            </div>
+                            <div class="multiselect-actions">
+                                <button class="select-all">Select All</button>
+                                <button class="select-none">Clear</button>
+                                <button class="select-power">Power 6</button>
+                            </div>
+                            <div class="multiselect-options">
+                                <div class="conf-group-label">Power Conferences</div>
+                                <label class="multiselect-option" data-conf="ACC"><input type="checkbox" checked> ACC</label>
+                                <label class="multiselect-option" data-conf="Big 12"><input type="checkbox" checked> Big 12</label>
+                                <label class="multiselect-option" data-conf="Big East"><input type="checkbox" checked> Big East</label>
+                                <label class="multiselect-option" data-conf="Big Ten"><input type="checkbox" checked> Big Ten</label>
+                                <label class="multiselect-option" data-conf="SEC"><input type="checkbox" checked> SEC</label>
+                                <label class="multiselect-option" data-conf="WCC"><input type="checkbox" checked> WCC</label>
+                                <div class="conf-group-label">Mid-Majors</div>
+                                <label class="multiselect-option" data-conf="A-10"><input type="checkbox" checked> A-10</label>
+                                <label class="multiselect-option" data-conf="American"><input type="checkbox" checked> American</label>
+                                <label class="multiselect-option" data-conf="Mountain West"><input type="checkbox" checked> Mountain West</label>
+                                <label class="multiselect-option" data-conf="MVC"><input type="checkbox" checked> MVC</label>
+                                <label class="multiselect-option" data-conf="Ivy"><input type="checkbox" checked> Ivy</label>
+                                <label class="multiselect-option" data-conf="CAA"><input type="checkbox" checked> CAA</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group" style="margin-left: auto;">
+                    <button class="info-toggle" id="rankingsInfoToggle">
+                        <span class="arrow">▼</span> Notes & Legend
+                    </button>
+                </div>
+            </div>
+
+            <!-- Collapsible Info Panel for Rankings -->
+            <div class="info-panel" id="rankingsInfoPanel">
+                <div class="info-panel-grid">
+                    <div>
+                        <h3 class="notes-title">System Notes</h3>
+                        <ul class="notes-list">
+                            <li><strong>EZ</strong> is a custom game score. <strong>EZ75</strong> normalizes to 75 possessions.</li>
+                            <li>EZ75 components: <strong>Off</strong>ense, <strong>Def</strong>ense, <strong>Pass</strong>ing, <strong>Reb</strong>ounding</li>
+                            <li>Box score stats shown as per-game averages</li>
+                            <li><span class="notable-down" style="color: #ff3366;">Red border</span> = Top 100 RSCI recruit</li>
+                            <li>School ranking includes SOS (Strength of Schedule)</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="notes-title">Color Legend</h3>
+                        <p class="legend-desc">Percentiles within class. Shot type % = ratio to total FGA.</p>
+                        <div class="color-legend">
+                            <div class="pct-10">10%</div>
+                            <div class="pct-20">20%</div>
+                            <div class="pct-30">30%</div>
+                            <div class="pct-40">40%</div>
+                            <div class="pct-50">50%</div>
+                            <div class="pct-60">60%</div>
+                            <div class="pct-70">70%</div>
+                            <div class="pct-80">80%</div>
+                            <div class="pct-90">90%</div>
+                            <div class="pct-100">100%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Class Tabs for Rankings -->
+            <div class="class-tabs">
+                <button class="class-tab active" data-rclass="r-freshmen">Freshmen <span class="count">(4)</span></button>
+                <button class="class-tab" data-rclass="r-sophomores">Sophomores <span class="count">(1)</span></button>
+                <button class="class-tab" data-rclass="r-juniors">Juniors <span class="count">(1)</span></button>
+                <button class="class-tab" data-rclass="r-seniors">Seniors <span class="count">(1)</span></button>
+            </div>
+
+            <!-- Freshmen Rankings -->
+            <div id="r-freshmen" class="class-content active">
+            <div class="cards-grid">
+                <!-- Cameron Boozer - #1 Freshman -->
+                <div class="player-card rsci" data-rsci="true" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/150.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">1</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">13.7</span>
+                            <span class="ez-score pct-100">16.9</span>
+                            <span class="ez-score pct-90">8.6</span>
+                            <span class="ez-score pct-80">2.7</span>
+                            <span class="ez-score pct-80">1.1</span>
+                            <span class="ez-score pct-90">4.4</span>
+                        </div>
+                    </div>
+                    <div class="ez-labels">
+                        <span>EZ</span><span>EZ75</span><span>Off</span><span>Def</span><span>Pass</span><span>Reb</span>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/5041935" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5041935.png" class="player-photo" alt="Cameron Boozer">
+                            <div class="player-name-photo"><span class="jersey">#12</span> Cameron Boozer</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 9" / 250 lbs<br>
+                                Freshman Forward<br>
+                                Miami, FL<br>
+                                <span class="team">#3 Duke (SOS #50)</span><br>
+                                ACC • Age 19.0
+                            </div>
+                            <span class="rsci-badge">#3 RSCI</span>
+                        </div>
+                    </div>
+                    <table class="stats-table">
+                        <tr><th>gs</th><th>gp</th><th>mpg</th><th>ts%</th><th>usg%</th><th>ppp</th></tr>
+                        <tr>
+                            <td>12</td>
+                            <td>12</td>
+                            <td class="pct-100">31</td>
+                            <td class="pct-80">66</td>
+                            <td class="pct-90">31</td>
+                            <td class="pct-90">1.19</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>pts</th><th>ast</th><th>reb</th><th>stl</th><th>blk</th><th>tov</th></tr>
+                        <tr>
+                            <td class="pct-100">23.2</td>
+                            <td class="pct-100">3.9</td>
+                            <td class="pct-100">10.0</td>
+                            <td class="pct-100">1.8</td>
+                            <td class="pct-90">0.9</td>
+                            <td class="pct-10">2.0</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>dnk</th><th>dnk%</th><th>lay</th><th>lay%</th><th>mid</th><th>mid%</th></tr>
+                        <tr>
+                            <td class="pct-90">14-15</td>
+                            <td class="pct-20">93%</td>
+                            <td class="pct-90">58-89</td>
+                            <td class="pct-60">65%</td>
+                            <td class="pct-50">5-15</td>
+                            <td class="pct-40">33%</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>2pt</th><th>2p%</th><th>3pt</th><th>3p%</th><th>ft</th><th>ft%</th><th>ftr</th></tr>
+                        <tr>
+                            <td class="pct-90">81-123</td>
+                            <td class="pct-80">65%</td>
+                            <td class="pct-60">16-48</td>
+                            <td class="pct-50">33%</td>
+                            <td class="pct-90">69-90</td>
+                            <td class="pct-50">76%</td>
+                            <td class="pct-80">0.53</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>astr</th><th>ast%</th><th>tor</th><th>to%</th><th>atr</th></tr>
+                        <tr>
+                            <td class="pct-90">6.4</td>
+                            <td class="pct-90">23.3</td>
+                            <td class="pct-70">3.3</td>
+                            <td class="pct-40">10.2</td>
+                            <td class="pct-70">2.0</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>st%</th><th>bk%</th><th>orr</th><th>or%</th><th>drr</th><th>dr%</th></tr>
+                        <tr>
+                            <td class="pct-80">2.9</td>
+                            <td class="pct-80">3.4</td>
+                            <td class="pct-80">5.0</td>
+                            <td class="pct-90">12.2</td>
+                            <td class="pct-90">11.3</td>
+                            <td class="pct-90">22.1</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- VJ Edgecombe - #2 Freshman (not actually a freshman lol) -->
+                <div class="player-card rsci" data-rsci="true" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/258.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">2</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">9.8</span>
+                            <span class="ez-score pct-100">16.3</span>
+                            <span class="ez-score pct-90">6.7</span>
+                            <span class="ez-score pct-100">4.8</span>
+                            <span class="ez-score pct-90">2.1</span>
+                            <span class="ez-score pct-70">2.8</span>
+                        </div>
+                    </div>
+                    <div class="ez-labels">
+                        <span>EZ</span><span>EZ75</span><span>Off</span><span>Def</span><span>Pass</span><span>Reb</span>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/5105596" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5105596.png" class="player-photo" alt="VJ Edgecombe">
+                            <div class="player-name-photo"><span class="jersey">#4</span> VJ Edgecombe</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 4" / 180 lbs<br>
+                                Freshman Guard<br>
+                                Nassau, Bahamas<br>
+                                <span class="team">#14 Baylor (SOS #28)</span><br>
+                                Big 12 • Age 19.2
+                            </div>
+                            <span class="rsci-badge">#6 RSCI</span>
+                        </div>
+                    </div>
+                    <table class="stats-table">
+                        <tr><th>gs</th><th>gp</th><th>mpg</th><th>ts%</th><th>usg%</th><th>ppp</th></tr>
+                        <tr>
+                            <td>11</td>
+                            <td>11</td>
+                            <td class="pct-90">28</td>
+                            <td class="pct-60">54</td>
+                            <td class="pct-100">34</td>
+                            <td class="pct-50">0.98</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>pts</th><th>ast</th><th>reb</th><th>stl</th><th>blk</th><th>tov</th></tr>
+                        <tr>
+                            <td class="pct-90">18.5</td>
+                            <td class="pct-80">3.2</td>
+                            <td class="pct-70">5.4</td>
+                            <td class="pct-100">2.1</td>
+                            <td class="pct-80">0.7</td>
+                            <td class="pct-20">2.8</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>dnk</th><th>dnk%</th><th>lay</th><th>lay%</th><th>mid</th><th>mid%</th></tr>
+                        <tr>
+                            <td class="pct-70">8-10</td>
+                            <td class="pct-30">80%</td>
+                            <td class="pct-100">62-98</td>
+                            <td class="pct-50">63%</td>
+                            <td class="pct-60">12-28</td>
+                            <td class="pct-40">42%</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>2pt</th><th>2p%</th><th>3pt</th><th>3p%</th><th>ft</th><th>ft%</th><th>ftr</th></tr>
+                        <tr>
+                            <td class="pct-100">82-136</td>
+                            <td class="pct-50">60%</td>
+                            <td class="pct-50">12-42</td>
+                            <td class="pct-30">28%</td>
+                            <td class="pct-80">48-68</td>
+                            <td class="pct-60">70%</td>
+                            <td class="pct-70">0.38</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>astr</th><th>ast%</th><th>tor</th><th>to%</th><th>atr</th></tr>
+                        <tr>
+                            <td class="pct-80">5.2</td>
+                            <td class="pct-70">18.5</td>
+                            <td class="pct-50">4.5</td>
+                            <td class="pct-30">13.2</td>
+                            <td class="pct-50">1.2</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>st%</th><th>bk%</th><th>orr</th><th>or%</th><th>drr</th><th>dr%</th></tr>
+                        <tr>
+                            <td class="pct-100">3.8</td>
+                            <td class="pct-70">2.1</td>
+                            <td class="pct-60">3.2</td>
+                            <td class="pct-70">8.5</td>
+                            <td class="pct-70">8.2</td>
+                            <td class="pct-70">16.4</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- AJ Dybantsa - #3 Freshman -->
+                <div class="player-card rsci" data-rsci="true" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/252.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">3</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">11.5</span>
+                            <span class="ez-score pct-100">15.8</span>
+                            <span class="ez-score pct-100">9.2</span>
+                            <span class="ez-score pct-70">2.4</span>
+                            <span class="ez-score pct-60">0.8</span>
+                            <span class="ez-score pct-80">3.4</span>
+                        </div>
+                    </div>
+                    <div class="ez-labels">
+                        <span>EZ</span><span>EZ75</span><span>Off</span><span>Def</span><span>Pass</span><span>Reb</span>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/5142718" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5142718.png" class="player-photo" alt="AJ Dybantsa">
+                            <div class="player-name-photo"><span class="jersey">#3</span> AJ Dybantsa</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 9"<br>
+                                Freshman Forward<br>
+                                Brockton, MA<br>
+                                <span class="team">#5 BYU (SOS #72)</span><br>
+                                Big 12 • Age 19.4
+                            </div>
+                            <span class="rsci-badge">#1 RSCI</span>
+                        </div>
+                    </div>
+                    <table class="stats-table">
+                        <tr><th>gs</th><th>gp</th><th>mpg</th><th>ts%</th><th>usg%</th><th>ppp</th></tr>
+                        <tr>
+                            <td>11</td>
+                            <td>11</td>
+                            <td class="pct-100">32</td>
+                            <td class="pct-70">58</td>
+                            <td class="pct-100">35</td>
+                            <td class="pct-70">1.08</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>pts</th><th>ast</th><th>reb</th><th>stl</th><th>blk</th><th>tov</th></tr>
+                        <tr>
+                            <td class="pct-100">22.8</td>
+                            <td class="pct-70">2.8</td>
+                            <td class="pct-80">6.8</td>
+                            <td class="pct-80">1.4</td>
+                            <td class="pct-70">0.6</td>
+                            <td class="pct-30">3.2</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>dnk</th><th>dnk%</th><th>lay</th><th>lay%</th><th>mid</th><th>mid%</th></tr>
+                        <tr>
+                            <td class="pct-80">10-12</td>
+                            <td class="pct-30">83%</td>
+                            <td class="pct-70">42-72</td>
+                            <td class="pct-50">58%</td>
+                            <td class="pct-100">28-48</td>
+                            <td class="pct-90">58%</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>2pt</th><th>2p%</th><th>3pt</th><th>3p%</th><th>ft</th><th>ft%</th><th>ftr</th></tr>
+                        <tr>
+                            <td class="pct-100">80-132</td>
+                            <td class="pct-50">60%</td>
+                            <td class="pct-70">22-62</td>
+                            <td class="pct-40">35%</td>
+                            <td class="pct-100">78-98</td>
+                            <td class="pct-70">79%</td>
+                            <td class="pct-90">0.51</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>astr</th><th>ast%</th><th>tor</th><th>to%</th><th>atr</th></tr>
+                        <tr>
+                            <td class="pct-60">4.5</td>
+                            <td class="pct-50">12.8</td>
+                            <td class="pct-50">5.2</td>
+                            <td class="pct-30">14.8</td>
+                            <td class="pct-50">0.9</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>st%</th><th>bk%</th><th>orr</th><th>or%</th><th>drr</th><th>dr%</th></tr>
+                        <tr>
+                            <td class="pct-70">2.4</td>
+                            <td class="pct-60">1.8</td>
+                            <td class="pct-70">4.2</td>
+                            <td class="pct-80">10.5</td>
+                            <td class="pct-80">9.8</td>
+                            <td class="pct-80">18.2</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Nolan Traore - #4 Freshman -->
+                <div class="player-card" data-rsci="false" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/130.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">4</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-90">10.2</span>
+                            <span class="ez-score pct-90">14.2</span>
+                            <span class="ez-score pct-80">5.8</span>
+                            <span class="ez-score pct-90">3.8</span>
+                            <span class="ez-score pct-100">4.2</span>
+                            <span class="ez-score pct-50">1.4</span>
+                        </div>
+                    </div>
+                    <div class="ez-labels">
+                        <span>EZ</span><span>EZ75</span><span>Off</span><span>Def</span><span>Pass</span><span>Reb</span>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="https://www.espn.com/mens-college-basketball/player/_/id/5142648" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5142648.png" class="player-photo" alt="Nolan Traore">
+                            <div class="player-name-photo"><span class="jersey">#12</span> Nolan Traore</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 4" / 175 lbs<br>
+                                Freshman Guard<br>
+                                Paris, France<br>
+                                <span class="team">#1 Auburn (SOS #32)</span><br>
+                                SEC • Age 18.9
+                            </div>
+                            <span class="rsci-badge">#8 RSCI</span>
+                        </div>
+                    </div>
+                    <table class="stats-table">
+                        <tr><th>gs</th><th>gp</th><th>mpg</th><th>ts%</th><th>usg%</th><th>ppp</th></tr>
+                        <tr>
+                            <td>10</td>
+                            <td>12</td>
+                            <td class="pct-80">24</td>
+                            <td class="pct-60">56</td>
+                            <td class="pct-70">22</td>
+                            <td class="pct-60">1.02</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>pts</th><th>ast</th><th>reb</th><th>stl</th><th>blk</th><th>tov</th></tr>
+                        <tr>
+                            <td class="pct-60">11.2</td>
+                            <td class="pct-100">5.8</td>
+                            <td class="pct-50">3.2</td>
+                            <td class="pct-90">1.8</td>
+                            <td class="pct-40">0.2</td>
+                            <td class="pct-40">2.4</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>dnk</th><th>dnk%</th><th>lay</th><th>lay%</th><th>mid</th><th>mid%</th></tr>
+                        <tr>
+                            <td class="pct-40">4-5</td>
+                            <td class="pct-30">80%</td>
+                            <td class="pct-80">52-82</td>
+                            <td class="pct-60">63%</td>
+                            <td class="pct-50">8-18</td>
+                            <td class="pct-40">44%</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>2pt</th><th>2p%</th><th>3pt</th><th>3p%</th><th>ft</th><th>ft%</th><th>ftr</th></tr>
+                        <tr>
+                            <td class="pct-70">64-105</td>
+                            <td class="pct-60">61%</td>
+                            <td class="pct-40">8-28</td>
+                            <td class="pct-30">28%</td>
+                            <td class="pct-60">32-42</td>
+                            <td class="pct-60">76%</td>
+                            <td class="pct-50">0.32</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>astr</th><th>ast%</th><th>tor</th><th>to%</th><th>atr</th></tr>
+                        <tr>
+                            <td class="pct-100">9.8</td>
+                            <td class="pct-100">32.5</td>
+                            <td class="pct-60">4.1</td>
+                            <td class="pct-50">13.8</td>
+                            <td class="pct-100">2.4</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>st%</th><th>bk%</th><th>orr</th><th>or%</th><th>drr</th><th>dr%</th></tr>
+                        <tr>
+                            <td class="pct-90">3.2</td>
+                            <td class="pct-30">0.5</td>
+                            <td class="pct-40">2.1</td>
+                            <td class="pct-50">6.2</td>
+                            <td class="pct-50">5.8</td>
+                            <td class="pct-50">12.4</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            </div>
+
+            <!-- Sophomores Rankings -->
+            <div id="r-sophomores" class="class-content">
+            <div class="cards-grid">
+                <div class="player-card" style="background-image: linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('https://a.espncdn.com/i/teamlogos/ncaa/500/2305.png');">
+                    <div class="card-rank-row">
+                        <span class="card-rank">1</span>
+                        <div class="ez-scores">
+                            <span class="ez-score pct-100">11.2</span>
+                            <span class="ez-score pct-100">14.8</span>
+                            <span class="ez-score pct-90">7.2</span>
+                            <span class="ez-score pct-80">3.1</span>
+                            <span class="ez-score pct-90">2.4</span>
+                            <span class="ez-score pct-70">2.1</span>
+                        </div>
+                    </div>
+                    <div class="ez-labels">
+                        <span>EZ</span><span>EZ75</span><span>Off</span><span>Def</span><span>Pass</span><span>Reb</span>
+                    </div>
+                    <div class="card-player-info">
+                        <a href="#" class="player-link">
+                            <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/4683853.png" class="player-photo" alt="Kon Knueppel">
+                            <div class="player-name-photo"><span class="jersey">#5</span> Kon Knueppel</div>
+                        </a>
+                        <div class="player-details">
+                            <div class="player-meta">
+                                6' 7" / 210 lbs<br>
+                                Sophomore Guard<br>
+                                Milwaukee, WI<br>
+                                <span class="team">#3 Duke (SOS #50)</span><br>
+                                ACC • Age 19.8
+                            </div>
+                        </div>
+                    </div>
+                    <table class="stats-table">
+                        <tr><th>gs</th><th>gp</th><th>mpg</th><th>ts%</th><th>usg%</th><th>ppp</th></tr>
+                        <tr>
+                            <td>12</td>
+                            <td>12</td>
+                            <td class="pct-90">29</td>
+                            <td class="pct-90">68</td>
+                            <td class="pct-80">26</td>
+                            <td class="pct-90">1.28</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>pts</th><th>ast</th><th>reb</th><th>stl</th><th>blk</th><th>tov</th></tr>
+                        <tr>
+                            <td class="pct-90">16.8</td>
+                            <td class="pct-80">3.5</td>
+                            <td class="pct-70">5.2</td>
+                            <td class="pct-70">1.1</td>
+                            <td class="pct-50">0.3</td>
+                            <td class="pct-60">1.8</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>2pt</th><th>2p%</th><th>3pt</th><th>3p%</th><th>ft</th><th>ft%</th><th>ftr</th></tr>
+                        <tr>
+                            <td class="pct-70">42-68</td>
+                            <td class="pct-80">61%</td>
+                            <td class="pct-90">38-82</td>
+                            <td class="pct-80">46%</td>
+                            <td class="pct-70">32-38</td>
+                            <td class="pct-80">84%</td>
+                            <td class="pct-50">0.25</td>
+                        </tr>
+                    </table>
+                    <table class="stats-table">
+                        <tr><th>st%</th><th>bk%</th><th>orr</th><th>or%</th><th>drr</th><th>dr%</th></tr>
+                        <tr>
+                            <td class="pct-70">1.8</td>
+                            <td class="pct-40">0.8</td>
+                            <td class="pct-50">2.1</td>
+                            <td class="pct-60">5.8</td>
+                            <td class="pct-80">9.2</td>
+                            <td class="pct-80">18.5</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            </div>
+
+            <!-- Juniors Rankings -->
+            <div id="r-juniors" class="class-content">
+            <div class="cards-grid">
+                <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Junior rankings will load here...</p>
+            </div>
+            </div>
+
+            <!-- Seniors Rankings -->
+            <div id="r-seniors" class="class-content">
+            <div class="cards-grid">
+                <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Senior rankings will load here...</p>
+            </div>
+            </div>
+        </div>
+
+        <!-- Voting Tab -->
+        <div id="voting" class="tab-content">
+            <div class="page-header">
+                <h1 class="page-title">Prospect Voting</h1>
+                <p class="page-subtitle">Help rank prospects by choosing who you think is better</p>
+            </div>
+
+            <div class="voting-container">
+                <h2 class="voting-title">Who's the better prospect?</h2>
+                <p class="voting-subtitle">Click on the player you think has more NBA potential</p>
+                
+                <div class="voting-matchup">
+                    <div class="voting-card rsci">
+                        <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5105625.png" class="voting-player-photo" alt="Cooper Flagg">
+                        <div class="voting-player-name">Cooper Flagg</div>
+                        <div class="voting-player-meta">
+                            6'9" / 205 lbs<br>
+                            Freshman Forward<br>
+                            Duke Blue Devils<br>
+                            Newport, ME • Age 18.0<br>
+                            18.4 PPG • 8.8 RPG • 3.1 BPG
+                        </div>
+                        <span class="voting-rsci-badge">#2 RSCI</span>
+                    </div>
+                    
+                    <div class="voting-vs">VS</div>
+                    
+                    <div class="voting-card rsci">
+                        <img src="https://a.espncdn.com/i/headshots/mens-college-basketball/players/full/5105582.png" class="voting-player-photo" alt="Ace Bailey">
+                        <div class="voting-player-name">Ace Bailey</div>
+                        <div class="voting-player-meta">
+                            6'9" / 195 lbs<br>
+                            Freshman Forward<br>
+                            Rutgers Scarlet Knights<br>
+                            Tacoma, WA • Age 19.1<br>
+                            17.2 PPG • 7.4 RPG • 1.8 BPG
+                        </div>
+                        <span class="voting-rsci-badge">#3 RSCI</span>
+                    </div>
+                </div>
+
+                <button class="voting-skip">Skip (I can't decide)</button>
+            </div>
+
+            <div class="crowd-rankings">
+                <div class="section-header">
+                    <h2>Crowd Rankings (Elo)</h2>
+                </div>
+                <table class="rankings-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Team</th>
+                            <th>Elo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Cooper Flagg</td>
+                            <td>Duke</td>
+                            <td class="elo">1842</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Ace Bailey</td>
+                            <td>Rutgers</td>
+                            <td class="elo">1798</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Dylan Harper</td>
+                            <td>Rutgers</td>
+                            <td class="elo">1756</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>VJ Edgecombe</td>
+                            <td>Baylor</td>
+                            <td class="elo">1721</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>Tre Johnson</td>
+                            <td>Texas</td>
+                            <td class="elo">1689</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>
+            <strong>Top Lines!</strong> — NCAA Prospect Analytics<br>
+            <a href="https://patreon.com/toplines">Support on Patreon</a> for exclusive content
+        </p>
+    </footer>
+
+    <script>
+        // Main nav tab switching
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tabId = link.dataset.tab;
+                
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Gender toggle
+        document.querySelectorAll('.gender-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Range toggle
+        document.querySelectorAll('.range-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Info panel toggle (Daily Reports)
+        const infoToggle = document.getElementById('infoToggle');
+        const infoPanel = document.getElementById('infoPanel');
+        if (infoToggle && infoPanel) {
+            infoToggle.addEventListener('click', () => {
+                infoToggle.classList.toggle('open');
+                infoPanel.classList.toggle('open');
+            });
+        }
+
+        // Info panel toggle (Rankings)
+        const rankingsInfoToggle = document.getElementById('rankingsInfoToggle');
+        const rankingsInfoPanel = document.getElementById('rankingsInfoPanel');
+        if (rankingsInfoToggle && rankingsInfoPanel) {
+            rankingsInfoToggle.addEventListener('click', () => {
+                rankingsInfoToggle.classList.toggle('open');
+                rankingsInfoPanel.classList.toggle('open');
+            });
+        }
+
+        // Class tabs switching (Daily Reports)
+        document.querySelectorAll('#daily .class-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const classId = tab.dataset.class;
+                
+                document.querySelectorAll('#daily .class-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                document.querySelectorAll('#daily .class-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(classId).classList.add('active');
+            });
+        });
+
+        // Class tabs switching (Rankings)
+        document.querySelectorAll('#rankings .class-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const classId = tab.dataset.rclass;
+                
+                document.querySelectorAll('#rankings .class-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                document.querySelectorAll('#rankings .class-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(classId).classList.add('active');
+            });
+        });
+
+        // Voting card click effect
+        document.querySelectorAll('.voting-card').forEach(card => {
+            card.addEventListener('click', () => {
+                card.style.borderColor = 'var(--accent-green)';
+                card.style.boxShadow = '0 0 40px rgba(0, 255, 136, 0.3)';
+                setTimeout(() => {
+                    alert('Vote recorded! Loading next matchup...');
+                    card.style.borderColor = 'var(--border-glow)';
+                    card.style.boxShadow = 'none';
+                }, 300);
+            });
+        });
+
+        // Multi-select dropdown functionality
+        const powerConfs = ['ACC', 'Big 12', 'Big East', 'Big Ten', 'SEC', 'WCC'];
+
+        document.querySelectorAll('.multiselect').forEach(multiselect => {
+            const btn = multiselect.querySelector('.multiselect-btn');
+            const dropdown = multiselect.querySelector('.multiselect-dropdown');
+            const searchInput = multiselect.querySelector('.multiselect-search input');
+            const options = multiselect.querySelectorAll('.multiselect-option');
+            const labelSpan = btn.querySelector('.label');
+
+            // Toggle dropdown
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Close other dropdowns
+                document.querySelectorAll('.multiselect').forEach(m => {
+                    if (m !== multiselect) m.classList.remove('open');
+                });
+                multiselect.classList.toggle('open');
+            });
+
+            // Update label based on selection
+            function updateLabel() {
+                const checked = multiselect.querySelectorAll('.multiselect-option input:checked');
+                const total = options.length;
+                if (checked.length === 0) {
+                    labelSpan.innerHTML = 'None selected';
+                } else if (checked.length === total) {
+                    labelSpan.innerHTML = 'All Conferences';
+                } else if (checked.length <= 3) {
+                    const names = Array.from(checked).map(cb => cb.parentElement.dataset.conf);
+                    labelSpan.innerHTML = names.join(', ');
+                } else {
+                    labelSpan.innerHTML = `<span class="count-badge">${checked.length}</span> conferences`;
+                }
+            }
+
+            // Checkbox change
+            options.forEach(opt => {
+                const checkbox = opt.querySelector('input');
+                checkbox.addEventListener('change', () => {
+                    opt.classList.toggle('selected', checkbox.checked);
+                    updateLabel();
+                });
+            });
+
+            // Select All
+            multiselect.querySelector('.select-all')?.addEventListener('click', () => {
+                options.forEach(opt => {
+                    const cb = opt.querySelector('input');
+                    cb.checked = true;
+                    opt.classList.add('selected');
+                });
+                updateLabel();
+            });
+
+            // Clear
+            multiselect.querySelector('.select-none')?.addEventListener('click', () => {
+                options.forEach(opt => {
+                    const cb = opt.querySelector('input');
+                    cb.checked = false;
+                    opt.classList.remove('selected');
+                });
+                updateLabel();
+            });
+
+            // Power 6
+            multiselect.querySelector('.select-power')?.addEventListener('click', () => {
+                options.forEach(opt => {
+                    const cb = opt.querySelector('input');
+                    const isPower = powerConfs.includes(opt.dataset.conf);
+                    cb.checked = isPower;
+                    opt.classList.toggle('selected', isPower);
+                });
+                updateLabel();
+            });
+
+            // Search filter
+            searchInput?.addEventListener('input', () => {
+                const query = searchInput.value.toLowerCase();
+                options.forEach(opt => {
+                    const text = opt.textContent.toLowerCase();
+                    opt.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.multiselect').forEach(m => m.classList.remove('open'));
+        });
+
+        // Prevent dropdown from closing when clicking inside
+        document.querySelectorAll('.multiselect-dropdown').forEach(dd => {
+            dd.addEventListener('click', (e) => e.stopPropagation());
+        });
+
+        // RSCI Toggle functionality
+        document.querySelectorAll('.toggle-switch input').forEach(toggle => {
+            const label = toggle.closest('.toggle-group').querySelector('.toggle-label');
+            toggle.addEventListener('change', () => {
+                label.classList.toggle('active', toggle.checked);
+                
+                // Find the nearest tab content container
+                const tabContent = toggle.closest('.tab-content');
+                const cards = tabContent ? tabContent.querySelectorAll('.player-card') : [];
+                
+                cards.forEach(card => {
+                    if (toggle.checked && card.dataset.rsci !== 'true') {
+                        card.style.display = 'none';
+                    } else {
+                        card.style.display = '';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
