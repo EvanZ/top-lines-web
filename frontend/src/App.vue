@@ -26,7 +26,7 @@ const isActive = (name) => {
   <div class="app">
     <!-- Hero Banner -->
     <div class="hero-banner">
-      <img src="/top_lines_websplash.jpg" alt="Top Lines" class="hero-image">
+      <img src="/top_lines_websplash_stylized.jpg" alt="Top Lines" class="hero-image">
       <div class="hero-overlay"></div>
     </div>
 

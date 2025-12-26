@@ -20,20 +20,49 @@ const isRsci = computed(() => props.player?.rsci_rank)
     :class="{ rsci: isRsci }"
     @click="emit('vote')"
   >
-    <img 
-      :src="player.headshot" 
-      class="voting-player-photo" 
-      :alt="player.name"
-    >
-    <div class="voting-player-name">{{ player.name }}</div>
-    <div class="voting-player-meta">
-      {{ player.height }} / {{ player.weight }} lbs<br>
-      {{ player.class }} {{ player.position }}<br>
-      {{ player.team }}<br>
-      <span v-if="player.birthplace">{{ player.birthplace }} • </span>Age {{ player.age }}<br>
-      {{ player.ppg }} PPG • {{ player.rpg }} RPG • {{ player.bpg }} BPG
+    <div class="voting-header">
+      <div class="voting-left">
+        <img 
+          :src="player.headshot" 
+          class="voting-player-photo" 
+          :alt="player.name"
+        >
+        <div class="voting-player-name">{{ player.name }}</div>
+      </div>
+      <div class="voting-player-meta">
+        {{ player.height }} / {{ player.weight }} lbs<br>
+        {{ player.class }} {{ player.position }}<br>
+        {{ player.team }}<br>
+        <span v-if="player.birthplace">{{ player.birthplace }} • </span>Age {{ player.age }}<br>
+        <span v-if="isRsci" class="voting-rsci-badge">#{{ player.rsci_rank }} RSCI</span>
+      </div>
     </div>
-    <span v-if="isRsci" class="voting-rsci-badge">#{{ player.rsci_rank }} RSCI</span>
+    <div class="voting-stats">
+      <div class="voting-stat">
+        <span class="voting-stat-label">PPG</span>
+        <span class="voting-stat-value">{{ player.ppg }}</span>
+      </div>
+      <div class="voting-stat">
+        <span class="voting-stat-label">RPG</span>
+        <span class="voting-stat-value">{{ player.rpg }}</span>
+      </div>
+      <div class="voting-stat">
+        <span class="voting-stat-label">APG</span>
+        <span class="voting-stat-value">{{ player.apg }}</span>
+      </div>
+      <div class="voting-stat">
+        <span class="voting-stat-label">SPG</span>
+        <span class="voting-stat-value">{{ player.spg }}</span>
+      </div>
+      <div class="voting-stat">
+        <span class="voting-stat-label">TOV</span>
+        <span class="voting-stat-value">{{ player.tpg }}</span>
+      </div>
+      <div class="voting-stat">
+        <span class="voting-stat-label">BPG</span>
+        <span class="voting-stat-value">{{ player.bpg }}</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -50,7 +79,21 @@ const isRsci = computed(() => props.player?.rsci_rank)
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+}
+
+.voting-header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.voting-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+  flex: 0 0 auto;
 }
 
 .voting-card:hover {
@@ -89,7 +132,7 @@ const isRsci = computed(() => props.player?.rsci_rank)
   height: 100px;
   border-radius: 50%;
   border: 3px solid var(--border-glow);
-  margin: 0 auto 1rem;
+  margin: 0 0 0.75rem;
   display: block;
   filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.15));
   transition: all 0.3s ease;
@@ -110,13 +153,48 @@ const isRsci = computed(() => props.player?.rsci_rank)
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .voting-player-meta {
+  text-align: left;
   font-size: 0.875rem;
   color: var(--text-secondary);
   line-height: 1.6;
+  flex: 1 1 auto;
+  min-width: 160px;
+}
+
+.voting-stats {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.3rem;
+  width: 100%;
+}
+
+.voting-stat {
+  background: rgba(255, 215, 0, 0.12);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 6px;
+  padding: 0.3rem 0.4rem;
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.voting-stat-label {
+  display: block;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.voting-stat-value {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-gold);
 }
 
 .voting-rsci-badge {
@@ -130,5 +208,16 @@ const isRsci = computed(() => props.player?.rsci_rank)
   border-radius: 4px;
   margin-top: 0.5rem;
 }
-</style>
 
+@media (max-width: 420px) {
+  .voting-header {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .voting-player-meta {
+    text-align: center;
+    min-width: auto;
+  }
+}
+</style>

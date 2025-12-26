@@ -30,6 +30,8 @@ const randomId = () =>
 function normalizePlayer(p) {
   const weight = (p.display_weight || '').replace(/lbs?/i, '').trim()
   const birthplace = [p.city, p.state || p.country].filter(Boolean).join(', ')
+  const ageRaw = Number(p.age_at_draft)
+  const ageYears = Number.isFinite(ageRaw) ? (ageRaw > 100 ? ageRaw / 365.25 : ageRaw) : null
   const fmt = (val) => (typeof val === 'number' ? val.toFixed(1) : '—')
 
   return {
@@ -43,9 +45,12 @@ function normalizePlayer(p) {
     position: p.position_display_name || '',
     team: p.team_location || p.team_name || '',
     birthplace,
-    age: fmt(p.age_at_draft),
+    age: fmt(ageYears),
     ppg: fmt(p.ppg),
     rpg: fmt(p.rpg),
+    apg: fmt(p.apg),
+    spg: fmt(p.spg),
+    tpg: fmt(p.tpg),
     bpg: fmt(p.bpg),
     rsci_rank: p.recruit_rank,
     ez: typeof p.ez === 'number' ? p.ez : null,
@@ -221,8 +226,6 @@ onMounted(() => {
           @vote="vote(playerA?.id)"
         />
         
-        <div class="voting-vs">VS</div>
-        
         <VotingCard 
           :player="playerB" 
           @vote="vote(playerB?.id)"
@@ -352,13 +355,6 @@ onMounted(() => {
 .voting-matchup.submitting {
   opacity: 0.6;
   pointer-events: none;
-}
-
-.voting-vs {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 2rem;
-  font-weight: 900;
-  color: var(--accent-red);
 }
 
 .voting-skip {
