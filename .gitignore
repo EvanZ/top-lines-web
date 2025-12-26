@@ -5,6 +5,7 @@
 *.venv
 *.cfg
 *.cypython
+*.pyc
 *.json
 *.md
 

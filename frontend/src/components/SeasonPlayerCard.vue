@@ -75,7 +75,11 @@
             {{ p.team_conf }}<span v-if="age"> • Age {{ age }}</span>
           </div>
           <span v-if="isRsci" class="rsci-badge">#{{ p.rsci_rank }} RSCI</span>
-          <span v-if="hasElo" class="elo-badge">Elo #{{ p.elo_rank }} • {{ p.elo_rating?.toFixed(0) }}</span>
+        </div>
+        <div v-if="hasElo" class="elo-rank-badge">
+          <div class="elo-rank-label">ELO RANK</div>
+          <div class="elo-rank-value">#{{ p.elo_rank }}</div>
+          <div class="elo-score">{{ p.elo_rating?.toFixed(0) }}</div>
         </div>
       </div>
       <table class="stats-table">

@@ -219,6 +219,14 @@ async def submit_vote(vote: Vote, request: Request) -> dict:
     return {"status": "ok", "id": request_id}
 
 
+@app.options("/api/vote")
+async def vote_options() -> dict:
+    """
+    Explicit preflight handler for vote endpoint (helps when proxies strip CORS headers).
+    """
+    return {"status": "ok"}
+
+
 if __name__ == "__main__":
     import uvicorn
 
