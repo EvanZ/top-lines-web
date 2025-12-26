@@ -17,7 +17,7 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
 </script>
 
 <template>
-  <div class="player-card" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('${teamLogo}')` }">
+  <div class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('${teamLogo}')` }">
     <div class="card-rank-row">
       <span class="card-rank">{{ p.class_rank }}<span v-if="p.notable" class="notable-up">{{ p.notable }}</span></span>
       <span class="game-rank">#{{ p.game_rank }}/{{ p.games }}</span>
@@ -40,6 +40,8 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
           <span class="team">#{{ p.team_rank }} {{ p.team_location }} ({{ p.team_conf }})</span><br>
           <span v-if="age">Age {{ age }}</span>
         </div>
+      </div>
+      <div class="player-badges">
         <span v-if="isRsci" class="rsci-badge">#{{ p.rsci_rank }} RSCI</span>
         <span v-if="hasElo" class="elo-badge">Elo #{{ p.elo_rank }} • {{ p.elo_rating?.toFixed(0) }}</span>
       </div>

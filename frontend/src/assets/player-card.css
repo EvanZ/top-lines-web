@@ -112,13 +112,14 @@
 .player-name-photo {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   color: var(--text-primary);
   margin-top: 0.25rem;
 }
 .jersey {
   color: var(--accent-gold);
   font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
 }
 .player-details { flex: 1; }
 .player-meta {
@@ -129,6 +130,13 @@
 .player-meta .team {
   color: var(--accent-cyan);
   font-weight: 600;
+}
+.player-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  margin-left: auto;
 }
 .rsci-badge {
   display: inline-block;
@@ -141,34 +149,17 @@
   border-radius: 3px;
   margin-top: 0.25rem;
 }
-.elo-rank-badge {
-  margin-left: auto;
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-gold));
-  color: #0a0e1a;
-  border-radius: 10px;
-  padding: 0.5rem 0.75rem;
-  min-width: 110px;
-  text-align: center;
-  box-shadow: 0 0 12px rgba(0, 212, 255, 0.35);
-  display: grid;
-  gap: 0.15rem;
-}
-
-.elo-rank-label {
-  font-size: 0.65rem;
-  letter-spacing: 0.05em;
+.elo-badge {
+  display: inline-block;
+  background: transparent;
+  color: #ffd400;
   font-family: 'Share Tech Mono', monospace;
-}
-
-.elo-rank-value {
-  font-size: 1.3rem;
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-.elo-score {
-  font-size: 0.9rem;
+  font-size: 0.7rem;
   font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  margin-top: 0.25rem;
+  border: 1px solid #ffd400;
 }
 .game-info {
   background: rgba(0,0,0,0.3);
@@ -221,3 +212,38 @@
 .pct-80 { background: #d4b200; color: var(--bg-dark); }
 .pct-90 { background: #e6c300; color: var(--bg-dark); }
 .pct-100 { background: #ffd700; color: var(--bg-dark); }
+
+.player-card.border-percentiles .stats-table td {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border: 0.1em solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
+}
+
+.player-card.border-percentiles .ez-score {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border: 0.1em solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
+}
+
+.player-card.border-percentiles .stats-table .pct-10,
+.player-card.border-percentiles .ez-score.pct-10 { border-color: #482878; }
+.player-card.border-percentiles .stats-table .pct-20,
+.player-card.border-percentiles .ez-score.pct-20 { border-color: #3e4989; }
+.player-card.border-percentiles .stats-table .pct-30,
+.player-card.border-percentiles .ez-score.pct-30 { border-color: #31688e; }
+.player-card.border-percentiles .stats-table .pct-40,
+.player-card.border-percentiles .ez-score.pct-40 { border-color: #26828e; }
+.player-card.border-percentiles .stats-table .pct-50,
+.player-card.border-percentiles .ez-score.pct-50 { border-color: #1f9e89; }
+.player-card.border-percentiles .stats-table .pct-60,
+.player-card.border-percentiles .ez-score.pct-60 { border-color: #35b779; }
+.player-card.border-percentiles .stats-table .pct-70,
+.player-card.border-percentiles .ez-score.pct-70 { border-color: #6dcd59; }
+.player-card.border-percentiles .stats-table .pct-80,
+.player-card.border-percentiles .ez-score.pct-80 { border-color: #b4de2c; }
+.player-card.border-percentiles .stats-table .pct-90,
+.player-card.border-percentiles .ez-score.pct-90 { border-color: #dce319; }
+.player-card.border-percentiles .stats-table .pct-100,
+.player-card.border-percentiles .ez-score.pct-100 { border-color: #fde725; }

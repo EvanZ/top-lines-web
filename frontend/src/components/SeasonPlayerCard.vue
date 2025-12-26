@@ -48,7 +48,7 @@
   </script>
   
   <template>
-    <div class="player-card" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('${teamLogo}')` }">
+  <div class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('${teamLogo}')` }">
       <div class="card-rank-row">
         <span class="card-rank">{{ p.class_rank }}</span>
         <div class="ez-scores">
@@ -65,23 +65,21 @@
         <a :href="`https://www.espn.com/${espnPath}/player/_/id/${p.player_id}`" class="player-link" target="_blank">
           <img :src="p.headshot_href" class="player-photo" :alt="p.display_name">
           <div class="player-name-photo"><span class="jersey">#{{ p.jersey }}</span> {{ p.display_name }}</div>
-        </a>
-        <div class="player-details">
-          <div class="player-meta">
-            {{ p.display_height }}<span v-if="p.display_weight"> / {{ p.display_weight }}</span><br>
-            {{ p.experience_display_value }} {{ p.position_display_name }}<br>
-            <span v-if="birthplace">{{ birthplace }}<br></span>
-            <span class="team">#{{ p.team_rank }} {{ p.team_location }} (SOS #{{ p.sos }})</span><br>
-            {{ p.team_conf }}<span v-if="age"> • Age {{ age }}</span>
-          </div>
-          <span v-if="isRsci" class="rsci-badge">#{{ p.rsci_rank }} RSCI</span>
-        </div>
-        <div v-if="hasElo" class="elo-rank-badge">
-          <div class="elo-rank-label">ELO RANK</div>
-          <div class="elo-rank-value">#{{ p.elo_rank }}</div>
-          <div class="elo-score">{{ p.elo_rating?.toFixed(0) }}</div>
+      </a>
+      <div class="player-details">
+        <div class="player-meta">
+          {{ p.display_height }}<span v-if="p.display_weight"> / {{ p.display_weight }}</span><br>
+          {{ p.experience_display_value }} {{ p.position_display_name }}<br>
+          <span v-if="birthplace">{{ birthplace }}<br></span>
+          <span class="team">#{{ p.team_rank }} {{ p.team_location }} (SOS #{{ p.sos }})</span><br>
+          {{ p.team_conf }}<span v-if="age"> • Age {{ age }}</span>
         </div>
       </div>
+      <div class="player-badges">
+        <span v-if="isRsci" class="rsci-badge">#{{ p.rsci_rank }} RSCI</span>
+        <span v-if="hasElo" class="elo-badge">Elo #{{ p.elo_rank }} • {{ p.elo_rating?.toFixed(0) }}</span>
+      </div>
+    </div>
       <table class="stats-table">
         <thead>
           <tr><th>gs</th><th>gp</th><th>min</th><th>mpg</th><th>ts%</th><th>usg%</th><th>ppp</th></tr>
