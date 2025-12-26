@@ -1,7 +1,8 @@
 import json
 import os
 import hashlib
-from datetime import datetime
+from collections import defaultdict, deque
+from datetime import datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
@@ -16,6 +17,11 @@ from pydantic import BaseModel, Field
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "DEV").upper()
+THROTTLE_WINDOW = timedelta(
+    seconds=int(os.environ.get("THROTTLE_WINDOW_SECONDS", 300))
+)  # default 5 minutes
+THROTTLE_MAX = int(os.environ.get("THROTTLE_MAX", 300))  # default 300 votes per window
+_recent_votes: defaultdict[str, deque[datetime]] = defaultdict(deque)
 
 
 def votes_base_path() -> Path:
@@ -40,6 +46,42 @@ def s3_votes_config() -> tuple[str | None, str]:
     return bucket, prefix.rstrip("/") + "/"
 
 
+def get_client_ip(request: Request) -> tuple[str | None, str]:
+    """
+    Best-effort client IP extraction.
+    Prefers X-Forwarded-For (first entry) then falls back to request.client.host.
+    """
+    # Common proxy headers (first non-empty wins)
+    header_sources = [
+        ("x-forwarded-for", lambda v: v.split(",")[0].strip()),
+        ("x-real-ip", lambda v: v.strip()),
+        ("cf-connecting-ip", lambda v: v.strip()),
+        ("forwarded", None),  # handled separately
+    ]
+
+    for header, extractor in header_sources:
+        value = request.headers.get(header)
+        if not value:
+            continue
+        if header == "forwarded":
+            # RFC 7239 Forwarded: for=1.2.3.4;proto=https;host=example.com
+            parts = [p.strip() for p in value.split(";") if p.strip()]
+            for part in parts:
+                if part.lower().startswith("for="):
+                    ip = part.split("=", 1)[1].strip().strip('"')
+                    if ip:
+                        return ip, header
+        else:
+            ip = extractor(value)
+            if ip:
+                return ip, header
+
+    if request.client and request.client.host:
+        return request.client.host, "request.client.host"
+
+    return None, "unavailable"
+
+
 def hash_ip(ip: str | None) -> str | None:
     """
     One-way hash of IP for coarse dedupe/abuse monitoring.
@@ -51,6 +93,29 @@ def hash_ip(ip: str | None) -> str | None:
     if not salt:
         return None
     return hashlib.sha256(f"{ip}{salt}".encode("utf-8")).hexdigest()
+
+
+def throttled(ip_hash: str | None) -> bool:
+    """
+    Simple in-memory throttle keyed by hashed IP.
+    Returns True if the caller exceeded the window/limit and records the timestamp otherwise.
+    """
+    if not ip_hash or THROTTLE_MAX <= 0:
+        return False
+
+    now = datetime.utcnow()
+    cutoff = now - THROTTLE_WINDOW
+    dq = _recent_votes[ip_hash]
+
+    # Drop timestamps outside the window
+    while dq and dq[0] < cutoff:
+        dq.popleft()
+
+    if len(dq) >= THROTTLE_MAX:
+        return True
+
+    dq.append(now)
+    return False
 
 
 class Vote(BaseModel):
@@ -97,6 +162,21 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
+@app.get("/api/debug/ip")
+async def debug_ip(request: Request) -> dict:
+    """
+    Lightweight endpoint to verify IP detection/hash in the running process.
+    """
+    ip, ip_source = get_client_ip(request)
+    salt_present = bool(os.environ.get("IP_HASH_SALT"))
+    return {
+        "ip": ip,
+        "ip_source": ip_source,
+        "ip_hash": hash_ip(ip),
+        "salt_present": salt_present,
+    }
+
+
 @app.post("/api/vote")
 async def submit_vote(vote: Vote, request: Request) -> dict:
     if vote.gender != "men":
@@ -104,14 +184,19 @@ async def submit_vote(vote: Vote, request: Request) -> dict:
 
     received_at = datetime.utcnow()
     request_id = uuid4().hex
+    ip, ip_source = get_client_ip(request)
 
     record = {
         "request_id": request_id,
         "received_at": received_at.isoformat(),
         **vote.dict(),
         "user_agent": request.headers.get("user-agent"),
-        "ip_hash": hash_ip(request.client.host if request.client else None),
+        "ip_hash": hash_ip(ip),
+        "ip_source": ip_source,
     }
+
+    if throttled(record["ip_hash"]):
+        raise HTTPException(status_code=429, detail="Too many votes from this IP. Please slow down.")
 
     if ENVIRONMENT == "PROD":
         bucket, prefix = s3_votes_config()
