@@ -300,7 +300,7 @@ onMounted(() => {
 }
 
 .page-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 2rem;
   font-weight: 900;
   background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
@@ -329,11 +329,11 @@ onMounted(() => {
   border-radius: 8px;
   margin-bottom: 1rem;
   text-align: center;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
 }
 
 .voting-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 1.5rem;
   color: var(--text-primary);
   margin: 0 0 0.5rem 0;
@@ -363,7 +363,7 @@ onMounted(() => {
   background: transparent;
   border: 1px solid var(--border-glow);
   color: var(--text-secondary);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   cursor: pointer;
   border-radius: 8px;
   transition: all 0.3s ease;
@@ -382,7 +382,7 @@ onMounted(() => {
 .vote-count {
   margin-top: 1rem;
   color: var(--text-secondary);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
 }
 
 .crowd-rankings {
@@ -390,7 +390,7 @@ onMounted(() => {
 }
 
 .section-header h2 {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 1.3rem;
   color: var(--text-primary);
   border-bottom: 2px solid var(--border-glow);
@@ -408,14 +408,14 @@ onMounted(() => {
   text-align: center;
   padding: 3rem;
   color: var(--text-secondary);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
 }
 
 .rankings-error {
   color: var(--accent-red);
   text-align: center;
   padding: 1rem;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
 }
 
 .elo-table-wrapper {
@@ -430,7 +430,7 @@ onMounted(() => {
   display: flex;
   gap: 1rem;
   color: var(--text-secondary);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   margin-bottom: 0.5rem;
   flex-wrap: wrap;
 }
@@ -450,7 +450,7 @@ onMounted(() => {
 
 .elo-table th {
   color: var(--text-secondary);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 0.8rem;
   text-transform: uppercase;
 }

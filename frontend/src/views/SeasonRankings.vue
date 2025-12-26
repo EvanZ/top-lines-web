@@ -165,7 +165,7 @@ onMounted(reloadData)
 }
 
 .page-title {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 2rem;
   font-weight: 900;
   background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
@@ -195,7 +195,7 @@ onMounted(reloadData)
   justify-content: center;
   padding: 4rem;
   color: var(--text-secondary);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   gap: 1rem;
 }
 
@@ -216,7 +216,7 @@ onMounted(reloadData)
   text-align: center;
   padding: 3rem;
   color: var(--accent-red);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   background: rgba(255, 0, 0, 0.1);
   border: 1px solid var(--accent-red);
   border-radius: 8px;
@@ -233,7 +233,7 @@ onMounted(reloadData)
   text-align: center;
   padding: 3rem;
   color: var(--text-secondary);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   grid-column: 1 / -1;
 }
 
@@ -241,7 +241,7 @@ onMounted(reloadData)
   text-align: center;
   padding: 1rem;
   color: var(--text-muted);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 0.875rem;
   margin-top: 1rem;
 }
@@ -261,7 +261,7 @@ onMounted(reloadData)
   border-radius: 4px;
   font-size: 0.75rem;
   cursor: pointer;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   transition: all 0.2s ease;
 }
 
@@ -344,7 +344,7 @@ onMounted(reloadData)
 }
 
 .color-legend .legend-chip {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
   text-align: center;

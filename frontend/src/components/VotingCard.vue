@@ -179,7 +179,7 @@ const isRsci = computed(() => props.player?.rsci_rank)
   border-radius: 6px;
   padding: 0.3rem 0.4rem;
   text-align: center;
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
 }
 
 .voting-stat-label {
@@ -201,7 +201,7 @@ const isRsci = computed(() => props.player?.rsci_rank)
   display: inline-block;
   background: linear-gradient(135deg, var(--accent-gold), #ff8800);
   color: var(--bg-dark);
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.2rem 0.5rem;

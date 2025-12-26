@@ -68,7 +68,7 @@ const isActive = (name) => {
 
 <style>
 /* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Sora:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
 
 /* CSS Variables */
 :root {
@@ -81,9 +81,9 @@ const isActive = (name) => {
   --accent-orange: #ff8800;
   --accent-red: #ff3366;
   --accent-green: #00ff88;
-  --text-primary: #e8f0ff;
-  --text-secondary: #8899aa;
-  --text-muted: #556677;
+  --text-primary: #d2d9e5;
+  --text-secondary: #8a9bb0;
+  --text-muted: #63748a;
 }
 
 /* Reset */
@@ -171,7 +171,7 @@ a:hover {
 }
 
 .logo-text {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 2rem;
   font-weight: 900;
   background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
@@ -181,7 +181,7 @@ a:hover {
 }
 
 .logo-sub {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 0.7rem;
   color: var(--text-muted);
   letter-spacing: 0.1em;
