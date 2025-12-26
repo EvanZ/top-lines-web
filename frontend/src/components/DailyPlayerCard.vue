@@ -8,7 +8,7 @@ const p = computed(() => props.player)
 const isRsci = computed(() => !!p.value.rsci_rank)
 const hasElo = computed(() => p.value.elo_rating != null)
 const espnPath = computed(() => props.gender === 'women' ? 'womens-college-basketball' : 'mens-college-basketball')
-const pct = (val) => `pct-${Math.round((val || 50) / 10) * 10}`
+const pct = (val) => `pct-${Math.round(((val ?? 50) / 10)) * 10}`
 const teamLogo = computed(() => p.value.team_logo)
 const cleanShot = (val) => val?.replace(/&nbsp;/g, '\u00A0') || ''
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }) : ''
@@ -17,7 +17,7 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
 </script>
 
 <template>
-  <div class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('${teamLogo}')` }">
+  <div class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(var(--card-overlay), var(--card-overlay)), url('${teamLogo}')` }">
     <div class="card-rank-row">
       <span class="card-rank">{{ p.class_rank }}<span v-if="p.notable" class="notable-up">{{ p.notable }}</span></span>
       <span class="game-rank">#{{ p.game_rank }}/{{ p.games }}</span>

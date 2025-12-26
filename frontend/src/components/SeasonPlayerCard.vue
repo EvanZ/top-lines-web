@@ -8,7 +8,16 @@
   const isRsci = computed(() => !!p.value.rsci_rank)
   const hasElo = computed(() => p.value.elo_rating != null)
   const espnPath = computed(() => props.gender === 'women' ? 'womens-college-basketball' : 'mens-college-basketball')
-  const pct = (val) => `pct-${Math.round((val || 50) / 10) * 10}`
+  const pct = (val) => `pct-${Math.round(((val ?? 50) / 10)) * 10}`
+  const toNumber = (val) => {
+    if (val == null || val === '') return null
+    const num = Number(val)
+    return Number.isFinite(num) ? num : null
+  }
+  const fmt = (val, digits = 1) => {
+    const num = toNumber(val)
+    return num == null ? '—' : num.toFixed(digits)
+  }
   const teamLogo = computed(() => `https://a.espncdn.com/i/teamlogos/ncaa/500/${p.value.team_id}.png`)
   const birthplace = computed(() => p.value.city && p.value.state ? `${p.value.city}, ${p.value.state}` : null)
   const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25).toFixed(1) : null)
@@ -48,7 +57,7 @@
   </script>
   
   <template>
-  <div class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.92)), url('${teamLogo}')` }">
+  <div class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(var(--card-overlay), var(--card-overlay)), url('${teamLogo}')` }">
       <div class="card-rank-row">
         <span class="card-rank">{{ p.class_rank }}</span>
         <div class="ez-scores">
@@ -107,7 +116,7 @@
             <td :class="pct(p.rpgpctile)">{{ p.rpg?.toFixed(1) }}</td>
             <td :class="pct(p.spgpctile)">{{ p.spg?.toFixed(1) }}</td>
             <td :class="pct(p.bpgpctile)">{{ p.bpg?.toFixed(1) }}</td>
-            <td :class="pct(100 - p.tpgpctile)">{{ p.tpg?.toFixed(1) }}</td>
+            <td :class="pct(p.tpgpctile)">{{ p.tpg?.toFixed(1) }}</td>
           </tr>
         </tbody>
       </table>
@@ -170,11 +179,11 @@
         </thead>
         <tbody>
           <tr>
-            <td :class="pct(p.apgpctile)">{{ p.apg?.toFixed(1) }}</td>
-            <td :class="pct(p.passing?.astpctpctile)">{{ p.passing?.astpct }}</td>
-            <td :class="pct(100 - p.tpgpctile)">{{ p.tpg?.toFixed(1) }}</td>
-            <td :class="pct(100 - p.tpgpctile)">{{ (p.tov / (p.ast + p.tov) * 100)?.toFixed(1) }}</td>
-            <td :class="pct(p.apgpctile)">{{ (p.ast / p.tov)?.toFixed(1) }}</td>
+            <td :class="pct(p.passing?.ast100pctile)">{{ fmt(p.passing?.ast100) }}</td>
+            <td :class="pct(p.passing?.astpctpctile)">{{ fmt(p.passing?.astpct) }}</td>
+            <td :class="pct(p.passing?.tov100pctile)">{{ fmt(p.passing?.tov100) }}</td>
+            <td :class="pct(p.passing?.tovpctpctile)">{{ fmt(p.passing?.tovpct) }}</td>
+            <td :class="pct(p.passing?.atrpctile)">{{ fmt(p.passing?.atr) }}</td>
           </tr>
         </tbody>
       </table>

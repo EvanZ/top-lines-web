@@ -1,11 +1,12 @@
 <script setup>
-import { ref, provide } from 'vue'
+import { ref, provide, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
 
 const gender = ref('men')
+const theme = ref('dark')
 
 // Provide gender to all child components
 provide('gender', gender)
@@ -20,6 +21,29 @@ const isActive = (name) => {
   if (name === 'daily' && route.path === '/') return true
   return route.path === `/${name}`
 }
+
+const applyTheme = (value) => {
+  document.documentElement.dataset.theme = value
+}
+
+const toggleTheme = () => {
+  theme.value = theme.value === 'dark' ? 'light' : 'dark'
+}
+
+onMounted(() => {
+  const stored = localStorage.getItem('toplines-theme')
+  if (stored === 'light' || stored === 'dark') {
+    theme.value = stored
+  } else if (window.matchMedia?.('(prefers-color-scheme: light)')?.matches) {
+    theme.value = 'light'
+  }
+  applyTheme(theme.value)
+})
+
+watch(theme, (value) => {
+  applyTheme(value)
+  localStorage.setItem('toplines-theme', value)
+})
 </script>
 
 <template>
@@ -48,6 +72,22 @@ const isActive = (name) => {
             {{ link.label }}
           </router-link>
         </nav>
+        <div class="header-actions">
+          <button
+            type="button"
+            class="theme-toggle"
+            :class="{ 'is-light': theme === 'light' }"
+            :aria-pressed="theme === 'light'"
+            :aria-label="`Switch to ${theme === 'light' ? 'night' : 'day'} mode`"
+            @click="toggleTheme"
+          >
+            <span class="theme-label">Night</span>
+            <span class="theme-track">
+              <span class="theme-thumb"></span>
+            </span>
+            <span class="theme-label">Day</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -84,6 +124,31 @@ const isActive = (name) => {
   --text-primary: #d2d9e5;
   --text-secondary: #8a9bb0;
   --text-muted: #63748a;
+  --header-bg: rgba(10, 14, 26, 0.95);
+  --hero-overlay-gradient: linear-gradient(transparent, var(--bg-dark));
+  --hero-image-opacity: 1;
+  --hero-image-filter: none;
+  --card-overlay: rgba(17, 24, 39, 0.92);
+}
+
+:root[data-theme="light"] {
+  --bg-dark: #f5f7fb;
+  --bg-card: #ffffff;
+  --bg-card-hover: #eef2f7;
+  --border-glow: #d0dae6;
+  --accent-cyan: #007fa6;
+  --accent-gold: #c08a00;
+  --accent-orange: #c86500;
+  --accent-red: #cc2a4a;
+  --accent-green: #00a06b;
+  --text-primary: #1f2a37;
+  --text-secondary: #4d5c70;
+  --text-muted: #7a8798;
+  --header-bg: rgba(245, 247, 251, 0.95);
+  --hero-overlay-gradient: linear-gradient(transparent, rgba(245, 247, 251, 0.95));
+  --hero-image-opacity: 0.25;
+  --hero-image-filter: saturate(0.6) brightness(1.05);
+  --card-overlay: rgba(255, 255, 255, 0.92);
 }
 
 /* Reset */
@@ -102,6 +167,12 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+:root[data-theme="light"] body {
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(0, 127, 166, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(255, 205, 102, 0.1) 0%, transparent 55%);
 }
 
 a {
@@ -134,6 +205,8 @@ a:hover {
   height: 100%;
   object-fit: cover;
   object-position: center 30%;
+  opacity: var(--hero-image-opacity);
+  filter: var(--hero-image-filter);
 }
 
 .hero-overlay {
@@ -142,12 +215,12 @@ a:hover {
   left: 0;
   right: 0;
   height: 100px;
-  background: linear-gradient(transparent, var(--bg-dark));
+  background: var(--hero-overlay-gradient);
 }
 
 /* Header */
 .header {
-  background: rgba(10, 14, 26, 0.95);
+  background: var(--header-bg);
   border-bottom: 1px solid var(--border-glow);
   position: sticky;
   top: 0;
@@ -191,6 +264,84 @@ a:hover {
   display: flex;
   gap: 0.5rem;
   flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-glow);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-family: 'Sora', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+
+.theme-track {
+  position: relative;
+  width: 36px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.theme-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.theme-toggle.is-light .theme-track {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.theme-toggle.is-light .theme-thumb {
+  transform: translateX(18px);
+  background: var(--accent-gold);
+}
+
+:root[data-theme="light"] .theme-toggle {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+:root[data-theme="light"] .theme-track {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.theme-label {
+  opacity: 0.6;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.theme-toggle:not(.is-light) .theme-label:first-child,
+.theme-toggle.is-light .theme-label:last-child {
+  opacity: 1;
+  color: var(--text-primary);
 }
 
 .nav-link {

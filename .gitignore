@@ -7,7 +7,7 @@
 *.cypython
 *.pyc
 *.json
-*.md
+
 
 *.csv
 *.xlsx

@@ -227,6 +227,12 @@
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
 }
 
+:root[data-theme="light"] .player-card.border-percentiles .stats-table td,
+:root[data-theme="light"] .player-card.border-percentiles .ez-score {
+  background: rgba(0, 0, 0, 0.02);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.12);
+}
+
 .player-card.border-percentiles .stats-table .pct-10,
 .player-card.border-percentiles .ez-score.pct-10 { border-color: #482878; }
 .player-card.border-percentiles .stats-table .pct-20,
