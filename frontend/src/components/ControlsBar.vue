@@ -206,7 +206,7 @@ function setGender(value) {
 }
 
 .control-label {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.75rem;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -226,7 +226,7 @@ function setGender(value) {
   background: var(--bg-dark);
   border: 1px solid var(--border-glow);
   color: var(--text-secondary);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.75rem;
   cursor: pointer;
   border-radius: 4px;
@@ -301,7 +301,7 @@ function setGender(value) {
 }
 
 .toggle-label {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.8rem;
   color: var(--text-secondary);
   cursor: pointer;
@@ -328,7 +328,7 @@ function setGender(value) {
   background: var(--bg-dark);
   border: 1px solid var(--border-glow);
   color: var(--text-secondary);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.75rem;
   cursor: pointer;
   border-radius: 4px;
@@ -358,7 +358,7 @@ function setGender(value) {
   border: none;
   border-bottom: 1px solid var(--border-glow);
   color: var(--accent-red);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.75rem;
   cursor: pointer;
   text-align: center;
@@ -369,7 +369,7 @@ function setGender(value) {
 }
 
 .conf-group-label {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.7rem;
   color: var(--text-muted);
   text-transform: uppercase;

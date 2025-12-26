@@ -68,7 +68,7 @@ const isActive = (name) => {
 
 <style>
 /* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Sora:wght@400;500;600;700;800&display=swap');
 
 /* CSS Variables */
 :root {
@@ -94,7 +94,7 @@ const isActive = (name) => {
 }
 
 body {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Sora', sans-serif;
   background: var(--bg-dark);
   background-image: 
     radial-gradient(ellipse at 20% 20%, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
@@ -171,8 +171,8 @@ a:hover {
 }
 
 .logo-text {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1.5rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2rem;
   font-weight: 900;
   background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
   -webkit-background-clip: text;
@@ -181,7 +181,7 @@ a:hover {
 }
 
 .logo-sub {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.7rem;
   color: var(--text-muted);
   letter-spacing: 0.1em;
@@ -196,7 +196,7 @@ a:hover {
 .nav-link {
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;

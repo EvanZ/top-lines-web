@@ -98,18 +98,18 @@ onMounted(reloadData)
         </div>
         <div>
           <h3 class="notes-title">Color Legend</h3>
-          <p class="legend-desc">Percentiles within class. Shot type % = ratio to total FGA.</p>
+          <p class="legend-desc">Percentiles within class. Border color runs violet → yellow. Shot type % = ratio to total FGA.</p>
           <div class="color-legend">
-            <div class="pct-10">10%</div>
-            <div class="pct-20">20%</div>
-            <div class="pct-30">30%</div>
-            <div class="pct-40">40%</div>
-            <div class="pct-50">50%</div>
-            <div class="pct-60">60%</div>
-            <div class="pct-70">70%</div>
-            <div class="pct-80">80%</div>
-            <div class="pct-90">90%</div>
-            <div class="pct-100">100%</div>
+            <div class="legend-chip legend-pct-10">10%</div>
+            <div class="legend-chip legend-pct-20">20%</div>
+            <div class="legend-chip legend-pct-30">30%</div>
+            <div class="legend-chip legend-pct-40">40%</div>
+            <div class="legend-chip legend-pct-50">50%</div>
+            <div class="legend-chip legend-pct-60">60%</div>
+            <div class="legend-chip legend-pct-70">70%</div>
+            <div class="legend-chip legend-pct-80">80%</div>
+            <div class="legend-chip legend-pct-90">90%</div>
+            <div class="legend-chip legend-pct-100">100%</div>
           </div>
         </div>
       </div>
@@ -165,7 +165,7 @@ onMounted(reloadData)
 }
 
 .page-title {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 2rem;
   font-weight: 900;
   background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
@@ -195,7 +195,7 @@ onMounted(reloadData)
   justify-content: center;
   padding: 4rem;
   color: var(--text-secondary);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   gap: 1rem;
 }
 
@@ -216,7 +216,7 @@ onMounted(reloadData)
   text-align: center;
   padding: 3rem;
   color: var(--accent-red);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   background: rgba(255, 0, 0, 0.1);
   border: 1px solid var(--accent-red);
   border-radius: 8px;
@@ -233,7 +233,7 @@ onMounted(reloadData)
   text-align: center;
   padding: 3rem;
   color: var(--text-secondary);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   grid-column: 1 / -1;
 }
 
@@ -241,7 +241,7 @@ onMounted(reloadData)
   text-align: center;
   padding: 1rem;
   color: var(--text-muted);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.875rem;
   margin-top: 1rem;
 }
@@ -261,7 +261,7 @@ onMounted(reloadData)
   border-radius: 4px;
   font-size: 0.75rem;
   cursor: pointer;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Barlow Condensed', sans-serif;
   transition: all 0.2s ease;
 }
 
@@ -343,22 +343,28 @@ onMounted(reloadData)
   flex-wrap: wrap;
 }
 
-.color-legend div {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.7rem;
+.color-legend .legend-chip {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
   text-align: center;
-  border-radius: 3px;
+  padding: 0.3rem 0.25rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border: 0.1em solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
 }
 
-/* Percentile colors for legend - gold gradient matching cards */
-.pct-10 { background: #3d3d3d; color: var(--text-secondary); }
-.pct-20 { background: #4a4535; color: var(--text-secondary); }
-.pct-30 { background: #574d2d; color: var(--text-primary); }
-.pct-40 { background: #645525; color: var(--text-primary); }
-.pct-50 { background: #7a6b1a; color: var(--text-primary); }
-.pct-60 { background: #9a850f; color: var(--bg-dark); }
-.pct-70 { background: #b89c00; color: var(--bg-dark); }
-.pct-80 { background: #d4b200; color: var(--bg-dark); }
-.pct-90 { background: #e6c300; color: var(--bg-dark); }
-.pct-100 { background: #ffd700; color: var(--bg-dark); }
+/* Percentile colors for legend - viridis borders */
+.color-legend .legend-pct-10 { border-color: #482878; }
+.color-legend .legend-pct-20 { border-color: #3e4989; }
+.color-legend .legend-pct-30 { border-color: #31688e; }
+.color-legend .legend-pct-40 { border-color: #26828e; }
+.color-legend .legend-pct-50 { border-color: #1f9e89; }
+.color-legend .legend-pct-60 { border-color: #35b779; }
+.color-legend .legend-pct-70 { border-color: #6dcd59; }
+.color-legend .legend-pct-80 { border-color: #b4de2c; }
+.color-legend .legend-pct-90 { border-color: #dce319; }
+.color-legend .legend-pct-100 { border-color: #fde725; }
 </style>

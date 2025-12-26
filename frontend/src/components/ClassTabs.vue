@@ -42,7 +42,7 @@ const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
   background: transparent;
   border: 1px solid var(--border-glow);
   color: var(--text-secondary);
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 0.875rem;
   font-weight: 600;
   text-transform: uppercase;
