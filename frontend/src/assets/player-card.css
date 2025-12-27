@@ -61,6 +61,45 @@
   gap: 4px;
   margin-left: auto;
 }
+.card-rank-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.card-rank-meta .ez-scores {
+  margin-left: 0;
+}
+
+.game-date-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-glow);
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.game-date-badge .date-month {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.game-date-badge .date-day {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+}
 .ez-score {
   font-family: 'Sora', sans-serif;
   font-weight: 600;
@@ -162,7 +201,6 @@
   border: 1px solid #ffd400;
 }
 .game-info {
-  background: rgba(0,0,0,0.3);
   border-radius: 6px;
   border-left: 3px solid var(--accent-cyan);
   padding: 0.5rem 0.75rem;
@@ -173,8 +211,12 @@
 }
 .game-info .win { color: #00ff88; }
 .game-info .loss { color: #ff3366; }
+.game-info .score-link { margin-left: 0.35rem; }
 .game-info .opponent { color: var(--text-primary); font-weight: 600; }
 .game-info a { color: var(--accent-cyan); text-decoration: none; font-weight: 600; }
+
+:root[data-theme="light"] .game-info .win { color: #1f7a3a; }
+:root[data-theme="light"] .game-info .loss { color: #b23a3a; }
 .notable-up {
   font-size: 0.5em;
   vertical-align: middle;

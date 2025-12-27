@@ -11,7 +11,15 @@ const espnPath = computed(() => props.gender === 'women' ? 'womens-college-baske
 const pct = (val) => `pct-${Math.round(((val ?? 50) / 10)) * 10}`
 const teamLogo = computed(() => p.value.team_logo)
 const cleanShot = (val) => val?.replace(/&nbsp;/g, '\u00A0') || ''
-const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }) : ''
+const dateParts = computed(() => {
+  const d = p.value.date
+  if (!d) return null
+  const date = new Date(d)
+  return {
+    month: date.toLocaleDateString('en-US', { month: 'short' }),
+    day: date.toLocaleDateString('en-US', { day: 'numeric' })
+  }
+})
 const birthplace = computed(() => p.value.city && p.value.state ? `${p.value.city}, ${p.value.state}` : null)
 const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25).toFixed(1) : null)
 </script>
@@ -21,9 +29,15 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
     <div class="card-rank-row">
       <span class="card-rank">{{ p.class_rank }}<span v-if="p.notable" class="notable-up">{{ p.notable }}</span></span>
       <span class="game-rank">#{{ p.game_rank }}/{{ p.games }}</span>
-      <div class="ez-scores">
-        <span class="ez-score" :class="pct(p.ez_struct?.ezpctile)">{{ p.ez_struct?.ez?.toFixed(1) }}</span>
-        <span class="ez-score" :class="pct(p.ez_struct?.ez75pctile)">{{ p.ez_struct?.ez75?.toFixed(1) }}</span>
+      <div class="card-rank-meta">
+        <span v-if="dateParts" class="game-date-badge">
+          <span class="date-month">{{ dateParts.month }}</span>
+          <span class="date-day">{{ dateParts.day }}</span>
+        </span>
+        <div class="ez-scores">
+          <span class="ez-score" :class="pct(p.ez_struct?.ezpctile)">{{ p.ez_struct?.ez?.toFixed(1) }}</span>
+          <span class="ez-score" :class="pct(p.ez_struct?.ez75pctile)">{{ p.ez_struct?.ez75?.toFixed(1) }}</span>
+        </div>
       </div>
     </div>
     <div class="ez-labels"><span>EZ</span><span>EZ75</span></div>
@@ -50,8 +64,7 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
       {{ p.starter ? 'Started' : 'Off bench' }} {{ p.minutes }}min 
       <span :class="p.team_pts > p.opp_pts ? 'win' : 'loss'">{{ p.team_pts > p.opp_pts ? 'W' : 'L' }}</span>
       {{ p.home ? 'vs' : '@' }} <span class="opponent">#{{ p.opp_rank }} {{ p.opp_location }}</span>
-      <a :href="`https://www.espn.com/${espnPath}/boxscore/_/gameId/${p.game_id}`" target="_blank">{{ p.team_pts }}-{{ p.opp_pts }}</a>
-      ({{ formatDate(p.date) }})
+      <a class="score-link" :href="`https://www.espn.com/${espnPath}/boxscore/_/gameId/${p.game_id}`" target="_blank">{{ p.team_pts }}-{{ p.opp_pts }}</a>
     </div>
     <table class="stats-table">
       <thead>
