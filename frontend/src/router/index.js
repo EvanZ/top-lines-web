@@ -18,7 +18,7 @@ const routes = [
     path: '/voting',
     name: 'voting',
     component: ProspectVoting
-  }
+  },
 ]
 
 const router = createRouter({
@@ -27,4 +27,3 @@ const router = createRouter({
 })
 
 export default router
-

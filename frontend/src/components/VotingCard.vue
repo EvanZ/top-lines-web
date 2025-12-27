@@ -10,7 +10,26 @@ const props = defineProps({
 
 const emit = defineEmits(['vote'])
 
+const pct = (val) => `pct-${Math.round(((val ?? 50) / 10)) * 10}`
 const isRsci = computed(() => props.player?.rsci_rank)
+const hasAge = computed(() => props.player?.age && props.player.age !== '—')
+const ezClass = computed(() => pct(props.player?.ez_pctile))
+const ezDisplay = computed(() => {
+  const ez = props.player?.ez_display
+  if (typeof ez !== 'number') return null
+  return ez.toFixed(1)
+})
+const displayProb = computed(() => {
+  const prob = props.player?.display_prob
+  if (typeof prob !== 'number' || !Number.isFinite(prob)) return null
+  return `${(prob * 100).toFixed(2)}%`
+})
+const initials = computed(() => {
+  const name = props.player?.name || ''
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return '?'
+  return parts.slice(0, 2).map((part) => part[0]).join('').toUpperCase()
+})
 </script>
 
 <template>
@@ -20,20 +39,27 @@ const isRsci = computed(() => props.player?.rsci_rank)
     :class="{ rsci: isRsci }"
     @click="emit('vote')"
   >
+    <div v-if="ezDisplay" class="voting-ez-badge" :class="ezClass">EZ {{ ezDisplay }}</div>
     <div class="voting-header">
       <div class="voting-left">
-        <img 
-          :src="player.headshot" 
-          class="voting-player-photo" 
+        <img
+          v-if="player.headshot"
+          :src="player.headshot"
+          class="voting-player-photo"
           :alt="player.name"
         >
+        <div v-else class="voting-player-placeholder">{{ initials }}</div>
         <div class="voting-player-name">{{ player.name }}</div>
       </div>
-      <div class="voting-player-meta">
+        <div class="voting-player-meta">
         {{ player.height }} / {{ player.weight }} lbs<br>
         {{ player.class }} {{ player.position }}<br>
         {{ player.team }}<br>
-        <span v-if="player.birthplace">{{ player.birthplace }} • </span>Age {{ player.age }}<br>
+        <span v-if="player.birthplace">{{ player.birthplace }}</span>
+        <span v-if="player.birthplace && hasAge"> • </span>
+        <span v-if="hasAge">Age {{ player.age }}</span>
+        <span v-if="player.birthplace || hasAge"><br></span>
+        <span v-if="displayProb">Impression {{ displayProb }}</span><br>
         <span v-if="isRsci" class="voting-rsci-badge">#{{ player.rsci_rank }} RSCI</span>
       </div>
     </div>
@@ -68,13 +94,13 @@ const isRsci = computed(() => props.player?.rsci_rank)
 
 <style scoped>
 .voting-card {
-  flex: 1;
-  max-width: 350px;
-  min-width: 280px;
+  flex: 1 1 380px;
+  max-width: 420px;
+  min-width: 320px;
   background: var(--bg-dark);
   border: 2px solid var(--border-glow);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1.75rem;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
@@ -111,6 +137,34 @@ const isRsci = computed(() => props.player?.rsci_rank)
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
 }
 
+.voting-ez-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--text-primary);
+  font-family: 'Sora', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-glow);
+  z-index: 1;
+}
+
+.voting-ez-badge.pct-10 { border-color: #482878; }
+.voting-ez-badge.pct-20 { border-color: #3e4989; }
+.voting-ez-badge.pct-30 { border-color: #31688e; }
+.voting-ez-badge.pct-40 { border-color: #26828e; }
+.voting-ez-badge.pct-50 { border-color: #1f9e89; }
+.voting-ez-badge.pct-60 { border-color: #35b779; }
+.voting-ez-badge.pct-70 { border-color: #6dcd59; }
+.voting-ez-badge.pct-80 { border-color: #b4de2c; }
+.voting-ez-badge.pct-90 { border-color: #dce319; }
+.voting-ez-badge.pct-100 { border-color: #fde725; }
+
 .voting-card.rsci::before {
   content: '';
   position: absolute;
@@ -138,12 +192,31 @@ const isRsci = computed(() => props.player?.rsci_rank)
   transition: all 0.3s ease;
 }
 
-.voting-card:hover .voting-player-photo {
+.voting-player-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid var(--border-glow);
+  margin: 0 0 0.75rem;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.15));
+  transition: all 0.3s ease;
+}
+
+.voting-card:hover .voting-player-photo,
+.voting-card:hover .voting-player-placeholder {
   border-color: var(--accent-cyan);
   filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.6));
 }
 
-.voting-card.rsci:hover .voting-player-photo {
+.voting-card.rsci:hover .voting-player-photo,
+.voting-card.rsci:hover .voting-player-placeholder {
   border-color: var(--accent-gold);
   filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.6));
 }
@@ -154,13 +227,15 @@ const isRsci = computed(() => props.player?.rsci_rank)
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.25rem;
+  line-height: 1.2;
+  word-break: break-word;
 }
 
 .voting-player-meta {
   text-align: left;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.45;
   flex: 1 1 auto;
   min-width: 160px;
 }

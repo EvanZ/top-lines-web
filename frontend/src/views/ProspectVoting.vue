@@ -5,6 +5,8 @@ import VotingCard from '../components/VotingCard.vue'
 const playerA = ref(null)
 const playerB = ref(null)
 const pool = ref([])
+const poolWeights = ref([])
+const poolWeightTotal = ref(0)
 const loading = ref(true)
 const submitting = ref(false)
 const error = ref(null)
@@ -19,8 +21,15 @@ const eloLoading = ref(true)
 const apiBase = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '')
 const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
 const voteEndpoint = `${apiBase}/api/vote`
-const MAX_RSIC_RANK = 50
+const EXP_TEMPERATURE = 0.25
 const ELO_MAX_ROWS = 50
+const TIER_1_CONF = new Set(['acc', 'bigten', 'big12', 'sec', 'bigeast'])
+const TIER_2_CONF = new Set(['wcc', 'westcoast', 'mountainwest', 'atlantic10', 'a10'])
+const CONF_TIER_WEIGHTS = {
+  1: 1.0,
+  2: 0.2,
+  3: 0.01
+}
 
 const randomId = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID
@@ -32,7 +41,11 @@ function normalizePlayer(p) {
   const birthplace = [p.city, p.state || p.country].filter(Boolean).join(', ')
   const ageRaw = Number(p.age_at_draft)
   const ageYears = Number.isFinite(ageRaw) ? (ageRaw > 100 ? ageRaw / 365.25 : ageRaw) : null
+  const safeAge = Number.isFinite(ageYears) && ageYears > 0 ? ageYears : null
   const fmt = (val) => (typeof val === 'number' ? val.toFixed(1) : '—')
+  const gp = Number(p.gp)
+  const ezRaw = typeof p.ez === 'number' ? p.ez : null
+  const ezPerGame = Number.isFinite(ezRaw) && Number.isFinite(gp) && gp > 0 ? ezRaw / gp : ezRaw
 
   return {
     id: p.player_id,
@@ -44,8 +57,9 @@ function normalizePlayer(p) {
     class: p.experience_display_value || '',
     position: p.position_display_name || '',
     team: p.team_location || p.team_name || '',
+    conference: p.team_conf || '',
     birthplace,
-    age: fmt(ageYears),
+    age: safeAge ? fmt(safeAge) : '—',
     ppg: fmt(p.ppg),
     rpg: fmt(p.rpg),
     apg: fmt(p.apg),
@@ -54,9 +68,100 @@ function normalizePlayer(p) {
     bpg: fmt(p.bpg),
     rsci_rank: p.recruit_rank,
     ez: typeof p.ez === 'number' ? p.ez : null,
+    ez_display: Number.isFinite(ezPerGame) ? ezPerGame : null,
+    ez_pctile: p.ez_pctile,
     recruit_rank: p.recruit_rank,
     classLower: (p.experience_display_value || '').toLowerCase()
   }
+}
+
+function normalizeConference(value) {
+  if (!value) return ''
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function conferenceTier(value) {
+  const key = normalizeConference(value)
+  if (TIER_1_CONF.has(key)) return 1
+  if (TIER_2_CONF.has(key)) return 2
+  return 3
+}
+
+function conferenceWeight(value) {
+  const tier = conferenceTier(value)
+  return CONF_TIER_WEIGHTS[tier] ?? CONF_TIER_WEIGHTS[3]
+}
+
+function getEzStats(players) {
+  let min = Infinity
+  let max = -Infinity
+  for (const p of players) {
+    if (!Number.isFinite(p.ez_display)) continue
+    if (p.ez_display < min) min = p.ez_display
+    if (p.ez_display > max) max = p.ez_display
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    return { min: 0, max: 0 }
+  }
+  return { min, max }
+}
+
+function buildWeights(players, temp) {
+  const { min, max } = getEzStats(players)
+  const range = max - min || 1
+  const safeTemp = temp === 0 ? 0.0001 : temp
+  const weights = players.map((p) => {
+    const ez = Number.isFinite(p.ez_display) ? p.ez_display : min
+    const ezNorm = Math.min(1, Math.max(0, (ez - min) / range))
+    const confWeight = conferenceWeight(p.conference)
+    const weight = Math.exp(ezNorm / safeTemp) * confWeight
+    return Number.isFinite(weight) ? weight : 0
+  })
+  const total = weights.reduce((sum, w) => sum + w, 0)
+  return { weights, total }
+}
+
+function rebuildWeights() {
+  if (!pool.value.length) {
+    poolWeights.value = []
+    poolWeightTotal.value = 0
+    return
+  }
+  const { weights, total } = buildWeights(pool.value, EXP_TEMPERATURE)
+  poolWeights.value = weights
+  poolWeightTotal.value = total
+}
+
+function pickWeightedIndex(excludeIndex = null) {
+  if (!pool.value.length || poolWeightTotal.value <= 0) return null
+  let total = poolWeightTotal.value
+  if (excludeIndex !== null && poolWeights.value[excludeIndex] != null) {
+    total -= poolWeights.value[excludeIndex]
+  }
+  if (total <= 0) return null
+  let r = Math.random() * total
+  for (let i = 0; i < poolWeights.value.length; i += 1) {
+    if (i === excludeIndex) continue
+    r -= poolWeights.value[i]
+    if (r <= 0) return i
+  }
+  return null
+}
+
+function displayProbForIndex(idx) {
+  if (idx == null || poolWeightTotal.value <= 0) return null
+  const weight = poolWeights.value[idx]
+  if (!Number.isFinite(weight) || weight <= 0) return null
+  return weight / poolWeightTotal.value
+}
+
+function pickRandomIndex(excludeIndex = null) {
+  if (pool.value.length < 1) return null
+  if (excludeIndex === null) return Math.floor(Math.random() * pool.value.length)
+  const max = pool.value.length - 1
+  if (max <= 0) return null
+  const idx = Math.floor(Math.random() * max)
+  return idx >= excludeIndex ? idx + 1 : idx
 }
 
 async function loadEloRankings() {
@@ -99,16 +204,11 @@ async function loadPool() {
   if (!rankingsResp.ok) throw new Error(`Unable to load rankings for ${date}`)
   const data = await rankingsResp.json()
 
-  const normalized = (data.players || []).map(normalizePlayer).filter(p => p.headshot)
+  const normalized = (data.players || []).map(normalizePlayer).filter(p => p.id)
   normalized.sort((a, b) => (b.ez || 0) - (a.ez || 0))
 
-  // For testing, focus on RSCI freshmen
-  const filtered = normalized.filter(
-    (p) => p.classLower === 'freshman' && p.recruit_rank && p.recruit_rank <= MAX_RSIC_RANK
-  )
-
-  const selected = filtered.length > 0 ? filtered : normalized
-  pool.value = selected.slice(0, 100) // keep a manageable pool
+  pool.value = normalized
+  rebuildWeights()
 }
 
 function pickMatchup() {
@@ -116,14 +216,19 @@ function pickMatchup() {
     throw new Error('Not enough players to create a matchup')
   }
 
-  const idxA = Math.floor(Math.random() * pool.value.length)
-  let idxB = idxA
-  while (idxB === idxA) {
-    idxB = Math.floor(Math.random() * pool.value.length)
+  const idxA = pickWeightedIndex() ?? pickRandomIndex()
+  let idxB = pickWeightedIndex(idxA)
+  if (idxB == null) {
+    idxB = pickRandomIndex(idxA)
+  }
+  if (idxA == null || idxB == null) {
+    throw new Error('Not enough players to create a matchup')
   }
 
-  playerA.value = pool.value[idxA]
-  playerB.value = pool.value[idxB]
+  const probA = displayProbForIndex(idxA)
+  const probB = displayProbForIndex(idxB)
+  playerA.value = { ...pool.value[idxA], display_prob: probA }
+  playerB.value = { ...pool.value[idxB], display_prob: probB }
   currentMatchupId.value = randomId()
 }
 
@@ -133,11 +238,19 @@ async function vote(winnerId) {
   error.value = null
 
   try {
+    const impressionProbA = typeof playerA.value?.display_prob === 'number'
+      ? Number(playerA.value.display_prob.toFixed(4))
+      : null
+    const impressionProbB = typeof playerB.value?.display_prob === 'number'
+      ? Number(playerB.value.display_prob.toFixed(4))
+      : null
     const payload = {
       matchup_id: currentMatchupId.value || randomId(),
       player_a_id: playerA.value.id,
       player_b_id: playerB.value.id,
       winner_id: winnerId,
+      impression_prob_a: impressionProbA,
+      impression_prob_b: impressionProbB,
       gender: 'men',
       client_version: 'web-voting-0.1.0'
     }
@@ -197,6 +310,7 @@ async function initialize() {
 onMounted(() => {
   initialize()
 })
+
 </script>
 
 <template>
@@ -217,7 +331,7 @@ onMounted(() => {
       <p class="voting-subtitle">
         Click the better prospect. Votes are stored anonymously and will feed the Elo leaderboard.
       </p>
-      
+
       <div v-if="loading" class="loading">Loading matchup...</div>
       
       <div v-else class="voting-matchup" :class="{ submitting }">
@@ -320,6 +434,8 @@ onMounted(() => {
   text-align: center;
   margin: 2rem 0;
 }
+
+
 
 .error-banner {
   border: 1px solid var(--accent-red);
