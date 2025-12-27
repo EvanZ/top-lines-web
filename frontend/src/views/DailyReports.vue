@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch, inject } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import DailyPlayerCard from '../components/DailyPlayerCard.vue'
 import ControlsBar from '../components/ControlsBar.vue'
 import ClassTabs from '../components/ClassTabs.vue'
@@ -14,6 +15,8 @@ const gender = inject('gender')
 const activeClass = ref('freshman')
 const dateRange = ref(3)
 const rsciOnly = ref(false)
+const compareEnabled = ref(false)
+const selectedCompare = ref([])
 const selectedConferences = ref([])
 const selectedPosition = ref('')
 const availableDate = ref('2025-12-23') // Latest available date
@@ -21,7 +24,7 @@ const infoPanelOpen = ref(false)
 
 const classes = ['freshman', 'sophomore', 'junior', 'senior']
 
-const filteredPlayers = computed(() => {
+const baseFilteredPlayers = computed(() => {
   return players.value.filter(player => {
     // Filter by class
     if (player.classLower !== activeClass.value) return false
@@ -40,6 +43,15 @@ const filteredPlayers = computed(() => {
   })
 })
 
+const filteredPlayers = computed(() => {
+  const base = baseFilteredPlayers.value
+  if (!compareEnabled.value || selectedCompare.value.length === 0) {
+    return base
+  }
+  const selected = new Set(selectedCompare.value)
+  return base.filter(player => selected.has(playerKey(player)))
+})
+
 // Compute subtitle based on meta
 const dateRangeText = computed(() => {
   if (!meta.value) return ''
@@ -52,6 +64,26 @@ function formatDateDisplay(dateStr) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+function playerKey(player) {
+  return `${player.player_id}-${player.game_id}`
+}
+
+function isSelected(player) {
+  return selectedCompare.value.includes(playerKey(player))
+}
+
+function toggleCompare(player, event) {
+  if (event.target.closest('a')) return
+  event.preventDefault()
+  event.stopPropagation()
+  const key = playerKey(player)
+  if (selectedCompare.value.includes(key)) {
+    selectedCompare.value = selectedCompare.value.filter(item => item !== key)
+  } else {
+    selectedCompare.value = [...selectedCompare.value, key]
+  }
+}
+
 // Reload data when dateRange or gender changes
 const reloadData = async () => {
   await Promise.all([
@@ -62,8 +94,26 @@ const reloadData = async () => {
 
 watch(dateRange, reloadData)
 watch(gender, reloadData)
+watch(activeClass, () => {
+  compareEnabled.value = false
+  selectedCompare.value = []
+})
+watch(baseFilteredPlayers, (list) => {
+  const allowed = new Set(list.map(playerKey))
+  selectedCompare.value = selectedCompare.value.filter(key => allowed.has(key))
+})
+watch(compareEnabled, (value) => {
+  if (!value) {
+    selectedCompare.value = []
+  }
+})
 
 onMounted(reloadData)
+
+onBeforeRouteLeave(() => {
+  compareEnabled.value = false
+  selectedCompare.value = []
+})
 </script>
 
 <template>
@@ -80,10 +130,13 @@ onMounted(reloadData)
       v-model:gender="gender"
       v-model:dateRange="dateRange"
       v-model:rsciOnly="rsciOnly"
+      v-model:compareEnabled="compareEnabled"
       v-model:selectedConferences="selectedConferences"
       v-model:selectedPosition="selectedPosition"
       :conferences="conferences"
       showDateRange
+      showCompare
+      :disableControls="compareEnabled"
     />
 
     <!-- Notes & Legend Toggle -->
@@ -128,6 +181,7 @@ onMounted(reloadData)
     <ClassTabs 
       :classes="classes" 
       v-model:activeClass="activeClass"
+      :disabled="compareEnabled"
     />
 
     <div v-if="loading" class="loading">
@@ -141,12 +195,18 @@ onMounted(reloadData)
     </div>
     
     <div v-else class="cards-grid">
-      <DailyPlayerCard 
-        v-for="player in filteredPlayers" 
+      <div
+        v-for="player in filteredPlayers"
         :key="player.player_id + '-' + player.game_id"
-        :player="player"
-        :gender="gender"
-      />
+        class="compare-card"
+        :class="{ 'is-selected': isSelected(player), 'is-compare': compareEnabled }"
+        @click="toggleCompare(player, $event)"
+      >
+        <DailyPlayerCard 
+          :player="player"
+          :gender="gender"
+        />
+      </div>
       
       <div v-if="filteredPlayers.length === 0" class="no-data">
         No players found for {{ activeClass }}.
@@ -191,6 +251,24 @@ onMounted(reloadData)
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 1rem;
   margin-top: 1.5rem;
+}
+
+.compare-card {
+  cursor: pointer;
+}
+
+.compare-card.is-selected :deep(.player-card) {
+  animation: compare-bounce 1s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes compare-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .loading {

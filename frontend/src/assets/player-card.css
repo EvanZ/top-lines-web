@@ -50,8 +50,8 @@
 .player-card.rsci .card-rank { color: var(--accent-gold); }
 .game-rank {
   font-family: 'Sora', sans-serif;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-size: 1rem;
+  color: var(--text-primary);
   background: rgba(255,255,255,0.05);
   padding: 0.3rem 0.6rem;
   border-radius: 4px;
@@ -132,10 +132,10 @@
 }
 .player-link { text-decoration: none; text-align: center; }
 .player-photo {
-  width: 70px;
-  height: 70px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
-  border: 2px solid var(--border-glow);
+  border: 0.1em solid var(--border-glow);
   object-fit: cover;
   filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.15));
   transition: all 0.3s ease;

@@ -19,11 +19,6 @@ const ezDisplay = computed(() => {
   if (typeof ez !== 'number') return null
   return ez.toFixed(1)
 })
-const displayProb = computed(() => {
-  const prob = props.player?.display_prob
-  if (typeof prob !== 'number' || !Number.isFinite(prob)) return null
-  return `${(prob * 100).toFixed(2)}%`
-})
 const initials = computed(() => {
   const name = props.player?.name || ''
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -57,9 +52,7 @@ const initials = computed(() => {
         {{ player.team }}<br>
         <span v-if="player.birthplace">{{ player.birthplace }}</span>
         <span v-if="player.birthplace && hasAge"> • </span>
-        <span v-if="hasAge">Age {{ player.age }}</span>
-        <span v-if="player.birthplace || hasAge"><br></span>
-        <span v-if="displayProb">Impression {{ displayProb }}</span><br>
+        <span v-if="hasAge">Age {{ player.age }}</span><br>
         <span v-if="isRsci" class="voting-rsci-badge">#{{ player.rsci_rank }} RSCI</span>
       </div>
     </div>
@@ -152,6 +145,11 @@ const initials = computed(() => {
   text-transform: uppercase;
   border: 1px solid var(--border-glow);
   z-index: 1;
+}
+
+:global(:root[data-theme="light"] .voting-ez-badge) {
+  background: rgba(255, 255, 255, 0.8);
+  color: #0a0e1a;
 }
 
 .voting-ez-badge.pct-10 { border-color: #482878; }

@@ -7,6 +7,10 @@ defineProps({
   activeClass: {
     type: String,
     required: true
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -22,6 +26,7 @@ const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
       :key="cls"
       class="class-tab"
       :class="{ active: activeClass === cls }"
+      :disabled="disabled"
       @click="emit('update:activeClass', cls)"
     >
       {{ capitalize(cls) }}
@@ -57,10 +62,19 @@ const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
   color: var(--text-primary);
 }
 
+.class-tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.class-tab:disabled:hover {
+  border-color: var(--border-glow);
+  color: var(--text-secondary);
+}
+
 .class-tab.active {
   background: var(--accent-cyan);
   border-color: var(--accent-cyan);
   color: var(--bg-dark);
 }
 </style>
-
