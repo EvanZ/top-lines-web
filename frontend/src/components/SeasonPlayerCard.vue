@@ -77,11 +77,11 @@
       </a>
       <div class="player-details">
         <div class="player-meta">
-          {{ p.display_height }}<span v-if="p.display_weight"> / {{ p.display_weight }}</span><br>
-          {{ p.experience_display_value }} {{ p.position_display_name }}<br>
+          {{ p.display_height }}<span v-if="p.display_weight"> | {{ p.display_weight }}</span><span v-if="age"> | {{ age }}</span><br>
+          <span v-if="p.experience_display_value">{{ p.experience_display_value }} {{ p.position_display_name }}<br></span>
           <span v-if="birthplace">{{ birthplace }}<br></span>
           <span class="team">#{{ p.team_rank }} {{ p.team_location }} (SOS #{{ p.sos }})</span><br>
-          {{ p.team_conf }}<span v-if="age"> • Age {{ age }}</span>
+          {{ p.team_conf }}
         </div>
       </div>
       <div class="player-badges">
