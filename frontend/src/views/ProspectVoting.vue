@@ -367,6 +367,7 @@ onMounted(() => {
         <div class="elo-meta">
           <span>Players: {{ eloRatings.length }}</span>
           <span v-if="eloMeta?.total_votes">Votes: {{ eloMeta.total_votes }}</span>
+          <span v-if="eloMeta?.distinct_voters != null">Voters: {{ eloMeta.distinct_voters }}</span>
           <span v-if="eloMeta?.generated_at">Updated: {{ eloMeta.generated_at }}</span>
         </div>
         <table class="elo-table">
