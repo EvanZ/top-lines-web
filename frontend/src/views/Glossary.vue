@@ -25,8 +25,8 @@ const withPercentile = (items) => [...items, percentileItem]
 
 const dailyGlossary = {
   ez: [
-    { label: 'EZ', formula: 'round(REB + SCOR + PASS + STOCKS, 3) in stage_top_lines' },
-    { label: 'EZ75', formula: 'round(75 * EZ * sgl.minutes / (minutes * poss), 1)' },
+    { label: 'Game EZ', formula: 'round(REB + SCOR + PASS + STOCKS, 3) in stage_top_lines' },
+    { label: 'Season EZ', formula: 'round(sum(EZ) / games_played, 1)' },
     { label: 'REB', formula: '0.6*ORB/adj_orb + 0.3*DRB/adj_drb' },
     { label: 'STOCKS', formula: '1.0*STL/adj_stl + 0.7*BLK/adj_blk' },
     { label: 'PASS', formula: '0.7*AST/adj_ast - 0.8*TOV/adj_tov' },
@@ -231,6 +231,50 @@ onMounted(loadGlossary)
       <p class="page-subtitle">
         Definitions pulled from the analytics formulas, with live examples from the latest reports.
       </p>
+    </div>
+
+    <div class="glossary-notes">
+      <div class="notes-header">Notes & Legend</div>
+      <div class="notes-panel-grid">
+        <div>
+          <h3 class="notes-title">Daily Reports Notes</h3>
+          <ul class="notes-list">
+            <li>Age calculated for Draft Night (June 2026)</li>
+            <li>Game rank shown as #X/Y (Xth best game out of Y played)</li>
+            <li><span class="notable-up">▲</span> = 1 std dev above avg &nbsp; <span class="notable-up">▲▲</span> = 2 std dev</li>
+            <li>Unassisted makes shown as Xu (e.g., 3u = 3 unassisted)</li>
+            <li><span class="gold-text">Gold border</span> = Top 100 RSCI recruit</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="notes-title">Season Rankings Notes</h3>
+          <ul class="notes-list">
+            <li><strong>EZ</strong> is a custom game score. <strong>EZ75</strong> normalizes to 75 possessions.</li>
+            <li>EZ75 components: <strong>Off</strong>ense, <strong>Def</strong>ense, <strong>Pass</strong>ing, <strong>Reb</strong>ounding</li>
+            <li>Box score stats shown as per-game averages</li>
+            <li><span class="gold-text">Gold border</span> = Top 100 RSCI recruit</li>
+            <li>School ranking includes SOS (Strength of Schedule)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="legend-block">
+        <h3 class="notes-title">Color Legend</h3>
+        <p class="legend-desc">
+          Percentiles within class. Border color runs violet → yellow. Shot type % = ratio to total FGA.
+        </p>
+        <div class="color-legend">
+          <div class="legend-chip legend-pct-10">10%</div>
+          <div class="legend-chip legend-pct-20">20%</div>
+          <div class="legend-chip legend-pct-30">30%</div>
+          <div class="legend-chip legend-pct-40">40%</div>
+          <div class="legend-chip legend-pct-50">50%</div>
+          <div class="legend-chip legend-pct-60">60%</div>
+          <div class="legend-chip legend-pct-70">70%</div>
+          <div class="legend-chip legend-pct-80">80%</div>
+          <div class="legend-chip legend-pct-90">90%</div>
+          <div class="legend-chip legend-pct-100">100%</div>
+        </div>
+      </div>
     </div>
 
     <div v-if="loading" class="loading">
@@ -453,6 +497,98 @@ onMounted(loadGlossary)
   margin: 0;
 }
 
+.glossary-notes {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.notes-header {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.notes-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.legend-block {
+  margin-top: 1.25rem;
+}
+
+.notes-title {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--accent-cyan);
+}
+
+.notes-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.notes-list li {
+  margin-bottom: 0.25rem;
+}
+
+.notable-up {
+  color: var(--accent-green);
+}
+
+.gold-text {
+  color: var(--accent-gold);
+}
+
+.legend-desc {
+  color: var(--text-muted);
+  margin: 0 0 0.5rem 0;
+  font-size: 0.75rem;
+}
+
+.color-legend {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.color-legend .legend-chip {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.3rem 0.25rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border: 0.1em solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Percentile colors for legend - viridis borders */
+.color-legend .legend-pct-10 { border-color: #482878; }
+.color-legend .legend-pct-20 { border-color: #3e4989; }
+.color-legend .legend-pct-30 { border-color: #31688e; }
+.color-legend .legend-pct-40 { border-color: #26828e; }
+.color-legend .legend-pct-50 { border-color: #1f9e89; }
+.color-legend .legend-pct-60 { border-color: #35b779; }
+.color-legend .legend-pct-70 { border-color: #6dcd59; }
+.color-legend .legend-pct-80 { border-color: #b4de2c; }
+.color-legend .legend-pct-90 { border-color: #dce319; }
+.color-legend .legend-pct-100 { border-color: #fde725; }
+
 .glossary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
@@ -583,6 +719,9 @@ onMounted(loadGlossary)
 }
 
 @media (max-width: 720px) {
+  .notes-panel-grid {
+    grid-template-columns: 1fr;
+  }
   .section-header {
     align-items: flex-start;
     flex-direction: column;

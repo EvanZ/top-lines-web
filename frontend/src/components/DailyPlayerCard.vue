@@ -27,7 +27,7 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
 <template>
   <div class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(var(--card-overlay), var(--card-overlay)), url('${teamLogo}')` }">
     <div class="card-rank-row">
-      <span class="card-rank">{{ p.class_rank }}<span v-if="p.notable" class="notable-up">{{ p.notable }}</span></span>
+      <span class="card-rank">{{ p.display_rank ?? p.class_rank }}<span v-if="p.notable" class="notable-up">{{ p.notable }}</span></span>
       <span class="game-rank">#{{ p.game_rank }}/{{ p.games }}</span>
       <div class="card-rank-meta">
         <span v-if="dateParts" class="game-date-badge">
@@ -36,11 +36,11 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
         </span>
         <div class="ez-scores">
           <span class="ez-score" :class="pct(p.ez_struct?.ezpctile)">{{ p.ez_struct?.ez?.toFixed(1) }}</span>
-          <span class="ez-score" :class="pct(p.ez_struct?.ez75pctile)">{{ p.ez_struct?.ez75?.toFixed(1) }}</span>
+          <span class="ez-score" :class="pct(p.ez_struct?.avgpctile)">{{ p.ez_struct?.avg?.toFixed(1) }}</span>
         </div>
       </div>
     </div>
-    <div class="ez-labels"><span>EZ</span><span>EZ75</span></div>
+    <div class="ez-labels"><span>Game</span><span>Season</span></div>
     <slot name="glossary-after-ez" />
     <div class="card-player-info">
       <a :href="`https://www.espn.com/${espnPath}/player/_/id/${p.player_id}`" class="player-link" target="_blank">

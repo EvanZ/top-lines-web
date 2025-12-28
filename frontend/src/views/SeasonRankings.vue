@@ -2,9 +2,9 @@
 import { ref, computed, onMounted, watch, inject } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import SeasonPlayerCard from '../components/SeasonPlayerCard.vue'
-import ControlsBar from '../components/ControlsBar.vue'
-import ClassTabs from '../components/ClassTabs.vue'
+import SettingsDrawer from '../components/SettingsDrawer.vue'
 import { usePlayerData, useConferences } from '../composables/usePlayerData.js'
+import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFilters.js'
 
 const { players, meta, loading, error, loadSeasonRankings } = usePlayerData()
 const { conferences, loadConferences } = useConferences()
@@ -12,28 +12,59 @@ const { conferences, loadConferences } = useConferences()
 // Inject gender from App.vue
 const gender = inject('gender')
 
-const activeClass = ref('freshman')
+const selectedClasses = ref(['freshman'])
 const rsciOnly = ref(false)
 const compareEnabled = ref(false)
 const selectedCompare = ref([])
 const selectedConferences = ref([])
 const selectedPosition = ref('')
 const availableDate = ref('2025-12-23') // Latest available date
-const infoPanelOpen = ref(false)
 
 const classes = ['freshman', 'sophomore', 'junior', 'senior']
+const savedFilters = loadSharedFilters()
+if (savedFilters.selectedClasses?.length) {
+  const filtered = savedFilters.selectedClasses.filter(cls => classes.includes(cls))
+  selectedClasses.value = filtered.length ? filtered : ['freshman']
+}
+if (typeof savedFilters.rsciOnly === 'boolean') {
+  rsciOnly.value = savedFilters.rsciOnly
+}
+if (typeof savedFilters.selectedPosition === 'string') {
+  selectedPosition.value = savedFilters.selectedPosition
+}
+if (Array.isArray(savedFilters.selectedConferences)) {
+  selectedConferences.value = savedFilters.selectedConferences
+}
+
+const selectedClassLabel = computed(() => {
+  if (selectedClasses.value.length === 1) return selectedClasses.value[0]
+  return 'selected classes'
+})
+
+const combinedRankScore = (player) => {
+  const gp = Number(player.gp)
+  const ez = Number(player.ez)
+  if (!Number.isFinite(gp) || gp <= 0) return 0
+  return Number.isFinite(ez) ? ez / gp : 0
+}
 
 const baseFilteredPlayers = computed(() => {
+  const selected = new Set(selectedClasses.value)
   return players.value
     .filter(player => {
-      if (player.classLower !== activeClass.value) return false
+      if (selected.size && !selected.has(player.classLower)) return false
       if (rsciOnly.value && !player.rsci_rank) return false
       if (selectedConferences.value.length > 0 && 
           !selectedConferences.value.includes(player.conference)) return false
       if (selectedPosition.value && player.position_display_name !== selectedPosition.value) return false
       return true
     })
-    .sort((a, b) => a.class_rank - b.class_rank)
+    .sort((a, b) => {
+      if (selectedClasses.value.length > 1) {
+        return combinedRankScore(b) - combinedRankScore(a)
+      }
+      return a.class_rank - b.class_rank
+    })
 })
 
 const filteredPlayers = computed(() => {
@@ -44,6 +75,13 @@ const filteredPlayers = computed(() => {
   const selected = new Set(selectedCompare.value)
   return base.filter(player => selected.has(playerKey(player)))
 })
+
+const rankedPlayers = computed(() => (
+  filteredPlayers.value.map((player, idx) => ({
+    ...player,
+    display_rank: idx + 1
+  }))
+))
 
 // Compute subtitle based on meta
 const dateRangeText = computed(() => {
@@ -86,10 +124,10 @@ const reloadData = async () => {
 }
 
 watch(gender, reloadData)
-watch(activeClass, () => {
+watch(selectedClasses, () => {
   compareEnabled.value = false
   selectedCompare.value = []
-})
+}, { deep: true })
 watch(baseFilteredPlayers, (list) => {
   const allowed = new Set(list.map(playerKey))
   selectedCompare.value = selectedCompare.value.filter(key => allowed.has(key))
@@ -99,6 +137,18 @@ watch(compareEnabled, (value) => {
     selectedCompare.value = []
   }
 })
+watch(
+  [selectedClasses, rsciOnly, selectedPosition, selectedConferences],
+  () => {
+    saveSharedFilters({
+      selectedClasses: selectedClasses.value,
+      rsciOnly: rsciOnly.value,
+      selectedPosition: selectedPosition.value,
+      selectedConferences: selectedConferences.value
+    })
+  },
+  { deep: true }
+)
 
 onMounted(reloadData)
 
@@ -110,69 +160,29 @@ onBeforeRouteLeave(() => {
 
 <template>
   <div class="season-rankings">
-    <div class="page-header">
-      <h1 class="page-title">Season Rankings</h1>
-      <p class="page-subtitle">
-        Cumulative prospect rankings based on full season performance
-        <span v-if="dateRangeText">({{ dateRangeText }})</span>
-      </p>
-    </div>
+    <div class="page-header-row">
+      <SettingsDrawer
+        v-model:selectedClasses="selectedClasses"
+        v-model:gender="gender"
+        v-model:rsciOnly="rsciOnly"
+        v-model:compareEnabled="compareEnabled"
+        v-model:selectedConferences="selectedConferences"
+        v-model:selectedPosition="selectedPosition"
+        :classes="classes"
+        :conferences="conferences"
+        :disableControls="compareEnabled"
+        showCompare
+        subtitle="Tune the rankings view"
+      />
 
-    <ControlsBar 
-      v-model:gender="gender"
-      v-model:rsciOnly="rsciOnly"
-      v-model:compareEnabled="compareEnabled"
-      v-model:selectedConferences="selectedConferences"
-      v-model:selectedPosition="selectedPosition"
-      :conferences="conferences"
-      showCompare
-      :disableControls="compareEnabled"
-    />
-
-    <!-- Notes & Legend Toggle -->
-    <div class="info-toggle-row">
-      <button class="info-toggle" :class="{ open: infoPanelOpen }" @click="infoPanelOpen = !infoPanelOpen">
-        <span class="arrow">▼</span> Notes & Legend
-      </button>
-    </div>
-
-    <!-- Collapsible Info Panel -->
-    <div class="info-panel" :class="{ open: infoPanelOpen }">
-      <div class="info-panel-grid">
-        <div>
-          <h3 class="notes-title">System Notes</h3>
-          <ul class="notes-list">
-            <li><strong>EZ</strong> is a custom game score. <strong>EZ75</strong> normalizes to 75 possessions.</li>
-            <li>EZ75 components: <strong>Off</strong>ense, <strong>Def</strong>ense, <strong>Pass</strong>ing, <strong>Reb</strong>ounding</li>
-            <li>Box score stats shown as per-game averages</li>
-            <li><span class="gold-text">Gold border</span> = Top 100 RSCI recruit</li>
-            <li>School ranking includes SOS (Strength of Schedule)</li>
-          </ul>
-        </div>
-        <div>
-          <h3 class="notes-title">Color Legend</h3>
-          <p class="legend-desc">Percentiles within class. Border color runs violet → yellow. Shot type % = ratio to total FGA.</p>
-          <div class="color-legend">
-            <div class="legend-chip legend-pct-10">10%</div>
-            <div class="legend-chip legend-pct-20">20%</div>
-            <div class="legend-chip legend-pct-30">30%</div>
-            <div class="legend-chip legend-pct-40">40%</div>
-            <div class="legend-chip legend-pct-50">50%</div>
-            <div class="legend-chip legend-pct-60">60%</div>
-            <div class="legend-chip legend-pct-70">70%</div>
-            <div class="legend-chip legend-pct-80">80%</div>
-            <div class="legend-chip legend-pct-90">90%</div>
-            <div class="legend-chip legend-pct-100">100%</div>
-          </div>
-        </div>
+      <div class="page-header">
+        <h1 class="page-title">Season Rankings</h1>
+        <p class="page-subtitle">
+          Cumulative prospect rankings based on full season performance
+          <span v-if="dateRangeText">({{ dateRangeText }})</span>
+        </p>
       </div>
     </div>
-
-    <ClassTabs 
-      :classes="classes" 
-      v-model:activeClass="activeClass"
-      :disabled="compareEnabled"
-    />
 
     <div v-if="loading" class="loading">
       <div class="loading-spinner"></div>
@@ -186,7 +196,7 @@ onBeforeRouteLeave(() => {
     
     <div v-else class="cards-grid">
       <div
-        v-for="player in filteredPlayers"
+        v-for="player in rankedPlayers"
         :key="player.player_id"
         class="compare-card"
         :class="{ 'is-selected': isSelected(player), 'is-compare': compareEnabled }"
@@ -198,12 +208,12 @@ onBeforeRouteLeave(() => {
         />
       </div>
       
-      <div v-if="filteredPlayers.length === 0" class="no-data">
+      <div v-if="rankedPlayers.length === 0" class="no-data">
         <p v-if="players.length === 0">
           No rankings data available. Run the season rankings export in Dagster.
         </p>
         <p v-else>
-          No players found for {{ activeClass }}.
+          No players found for {{ selectedClassLabel }}.
           <span v-if="rsciOnly">Try disabling the RSCI filter.</span>
         </p>
       </div>
@@ -220,8 +230,16 @@ onBeforeRouteLeave(() => {
   padding: 1rem;
 }
 
+.page-header-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
 .page-header {
-  margin-bottom: 1.5rem;
+  margin: 0;
+  flex: 1;
 }
 
 .page-title {
@@ -241,11 +259,12 @@ onBeforeRouteLeave(() => {
   margin: 0;
 }
 
+
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
 }
 
 .compare-card {
@@ -324,125 +343,11 @@ onBeforeRouteLeave(() => {
   margin-top: 1rem;
 }
 
-/* Info Panel Toggle */
-.info-toggle-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 0.5rem;
-}
-
-.info-toggle {
-  background: transparent;
-  border: 1px solid var(--border-glow);
-  color: var(--text-muted);
-  padding: 0.4rem 0.8rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  font-family: 'Sora', sans-serif;
-  transition: all 0.2s ease;
-}
-
-.info-toggle:hover {
-  border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
-}
-
-.info-toggle .arrow {
-  display: inline-block;
-  transition: transform 0.2s ease;
-  margin-right: 0.25rem;
-}
-
-.info-toggle.open .arrow {
-  transform: rotate(180deg);
-}
-
-/* Info Panel */
-.info-panel {
-  display: none;
-  background: var(--bg-card);
-  border: 1px solid var(--border-glow);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1rem;
-  font-size: 0.8rem;
-}
-
-.info-panel.open {
-  display: block;
-}
-
-.info-panel-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
 @media (max-width: 768px) {
-  .info-panel-grid {
-    grid-template-columns: 1fr;
+  .page-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
   }
 }
-
-.notes-title {
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 0.8rem;
-  margin: 0 0 0.5rem 0;
-  color: var(--accent-cyan);
-}
-
-.notes-list {
-  margin: 0;
-  padding-left: 1.25rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.notes-list li {
-  margin-bottom: 0.25rem;
-}
-
-.gold-text {
-  color: var(--accent-gold);
-}
-
-.legend-desc {
-  color: var(--text-muted);
-  margin: 0 0 0.5rem 0;
-  font-size: 0.75rem;
-}
-
-.color-legend {
-  display: flex;
-  gap: 2px;
-  flex-wrap: wrap;
-}
-
-.color-legend .legend-chip {
-  font-family: 'Sora', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-align: center;
-  padding: 0.3rem 0.25rem;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-primary);
-  border: 0.1em solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
-}
-
-/* Percentile colors for legend - viridis borders */
-.color-legend .legend-pct-10 { border-color: #482878; }
-.color-legend .legend-pct-20 { border-color: #3e4989; }
-.color-legend .legend-pct-30 { border-color: #31688e; }
-.color-legend .legend-pct-40 { border-color: #26828e; }
-.color-legend .legend-pct-50 { border-color: #1f9e89; }
-.color-legend .legend-pct-60 { border-color: #35b779; }
-.color-legend .legend-pct-70 { border-color: #6dcd59; }
-.color-legend .legend-pct-80 { border-color: #b4de2c; }
-.color-legend .legend-pct-90 { border-color: #dce319; }
-.color-legend .legend-pct-100 { border-color: #fde725; }
 </style>

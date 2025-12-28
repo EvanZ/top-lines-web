@@ -59,7 +59,7 @@
   <template>
   <div class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(var(--card-overlay), var(--card-overlay)), url('${teamLogo}')` }">
       <div class="card-rank-row">
-        <span class="card-rank">{{ p.class_rank }}</span>
+        <span class="card-rank">{{ p.display_rank ?? p.class_rank }}</span>
         <div class="ez-scores">
           <span class="ez-score" :class="pct(p.ez_pctile)">{{ (p.ez / gp)?.toFixed(1) }}</span>
           <span class="ez-score" :class="pct(p.ez_poss_pctile)">{{ (p.ez / (p.team_poss * p.minutes / p.team_minutes) * 75)?.toFixed(1) }}</span>

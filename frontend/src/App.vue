@@ -39,11 +39,20 @@ onMounted(() => {
     theme.value = 'light'
   }
   applyTheme(theme.value)
+
+  const storedGender = localStorage.getItem('toplines-gender')
+  if (storedGender === 'men' || storedGender === 'women') {
+    gender.value = storedGender
+  }
 })
 
 watch(theme, (value) => {
   applyTheme(value)
   localStorage.setItem('toplines-theme', value)
+})
+
+watch(gender, (value) => {
+  localStorage.setItem('toplines-gender', value)
 })
 </script>
 
@@ -82,12 +91,35 @@ watch(theme, (value) => {
             :aria-label="`Switch to ${theme === 'light' ? 'night' : 'day'} mode`"
             @click="toggleTheme"
           >
-            <span class="theme-label">Night</span>
+            <span class="theme-label" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+                <path
+                  d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
             <span class="theme-track">
               <span class="theme-thumb"></span>
             </span>
-            <span class="theme-label">Day</span>
+            <span class="theme-label" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+                <path
+                  d="M12 6.75v-2m0 14.5v-2m7.25-5.25h-2m-10.5 0h-2m12.2-5.95-1.4 1.4m-9.2 9.2-1.4 1.4m12 9.2-1.4-1.4m-9.2-9.2-1.4-1.4M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
           </button>
+          <div id="settings-trigger" class="settings-trigger"></div>
         </div>
       </div>
     </header>
@@ -270,6 +302,7 @@ a:hover {
 .header-actions {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .theme-toggle {
@@ -339,10 +372,21 @@ a:hover {
   transition: opacity 0.2s ease, color 0.2s ease;
 }
 
+.theme-label svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  display: block;
+}
+
 .theme-toggle:not(.is-light) .theme-label:first-child,
 .theme-toggle.is-light .theme-label:last-child {
   opacity: 1;
   color: var(--text-primary);
+}
+
+.settings-trigger {
+  display: flex;
+  align-items: center;
 }
 
 .nav-link {

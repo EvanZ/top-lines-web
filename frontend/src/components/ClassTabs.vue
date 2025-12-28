@@ -1,11 +1,11 @@
 <script setup>
-defineProps({
+const props = defineProps({
   classes: {
     type: Array,
     required: true
   },
-  activeClass: {
-    type: String,
+  selectedClasses: {
+    type: Array,
     required: true
   },
   disabled: {
@@ -14,9 +14,20 @@ defineProps({
   }
 })
 
-const emit = defineEmits(['update:activeClass'])
+const emit = defineEmits(['update:selectedClasses'])
 
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
+
+const toggleClass = (cls) => {
+  if (props.disabled) return
+  const current = props.selectedClasses || []
+  if (current.includes(cls)) {
+    if (current.length <= 1) return
+    emit('update:selectedClasses', current.filter(item => item !== cls))
+    return
+  }
+  emit('update:selectedClasses', [...current, cls])
+}
 </script>
 
 <template>
@@ -25,9 +36,9 @@ const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
       v-for="cls in classes" 
       :key="cls"
       class="class-tab"
-      :class="{ active: activeClass === cls }"
+      :class="{ active: selectedClasses.includes(cls) }"
       :disabled="disabled"
-      @click="emit('update:activeClass', cls)"
+      @click="toggleClass(cls)"
     >
       {{ capitalize(cls) }}
     </button>
