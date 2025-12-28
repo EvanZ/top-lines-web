@@ -8,9 +8,6 @@ const route = useRoute()
 const gender = ref('men')
 const theme = ref('dark')
 
-// Provide gender to all child components
-provide('gender', gender)
-
 const navLinks = [
   { name: 'daily', label: 'Games', path: '/' },
   { name: 'rankings', label: 'Season', path: '/rankings' },
@@ -30,6 +27,11 @@ const applyTheme = (value) => {
 const toggleTheme = () => {
   theme.value = theme.value === 'dark' ? 'light' : 'dark'
 }
+
+// Provide shared app state to all child components
+provide('gender', gender)
+provide('theme', theme)
+provide('toggleTheme', toggleTheme)
 
 onMounted(() => {
   const stored = localStorage.getItem('toplines-theme')
@@ -83,42 +85,7 @@ watch(gender, (value) => {
           </router-link>
         </nav>
         <div class="header-actions">
-          <button
-            type="button"
-            class="theme-toggle"
-            :class="{ 'is-light': theme === 'light' }"
-            :aria-pressed="theme === 'light'"
-            :aria-label="`Switch to ${theme === 'light' ? 'night' : 'day'} mode`"
-            @click="toggleTheme"
-          >
-            <span class="theme-label" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="presentation" focusable="false">
-                <path
-                  d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </span>
-            <span class="theme-track">
-              <span class="theme-thumb"></span>
-            </span>
-            <span class="theme-label" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="presentation" focusable="false">
-                <path
-                  d="M12 6.75v-2m0 14.5v-2m7.25-5.25h-2m-10.5 0h-2m12.2-5.95-1.4 1.4m-9.2 9.2-1.4 1.4m12 9.2-1.4-1.4m-9.2-9.2-1.4-1.4M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </span>
-          </button>
+          <div id="compare-trigger" class="compare-trigger"></div>
           <div id="settings-trigger" class="settings-trigger"></div>
         </div>
       </div>
@@ -304,87 +271,8 @@ a:hover {
   align-items: center;
   gap: 0.75rem;
 }
-
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-glow);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-secondary);
-  font-family: 'Sora', sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
-}
-
-.theme-toggle:hover {
-  border-color: var(--accent-cyan);
-  color: var(--text-primary);
-}
-
-.theme-track {
-  position: relative;
-  width: 36px;
-  height: 18px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.theme-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--accent-cyan);
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.theme-toggle.is-light .theme-track {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(0, 0, 0, 0.12);
-}
-
-.theme-toggle.is-light .theme-thumb {
-  transform: translateX(18px);
-  background: var(--accent-gold);
-}
-
-:root[data-theme="light"] .theme-toggle {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-:root[data-theme="light"] .theme-track {
-  background: rgba(0, 0, 0, 0.08);
-  border-color: rgba(0, 0, 0, 0.12);
-}
-
-.theme-label {
-  opacity: 0.6;
-  transition: opacity 0.2s ease, color 0.2s ease;
-}
-
-.theme-label svg {
-  width: 0.9rem;
-  height: 0.9rem;
-  display: block;
-}
-
-.theme-toggle:not(.is-light) .theme-label:first-child,
-.theme-toggle.is-light .theme-label:last-child {
-  opacity: 1;
-  color: var(--text-primary);
-}
-
-.settings-trigger {
+.settings-trigger,
+.compare-trigger {
   display: flex;
   align-items: center;
 }

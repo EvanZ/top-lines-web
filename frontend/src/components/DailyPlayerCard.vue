@@ -50,7 +50,7 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
       <div class="player-details">
         <div class="player-meta">
           {{ p.display_height }}<span v-if="p.display_weight">&nbsp;{{ p.display_weight }}</span><br>
-          <span v-if="age">Age&nbsp;{{ age }}</span><br>
+          <span v-if="age">Age&nbsp;{{ age }}<br></span>
           {{ p.experience_display_value }} {{ p.position_display_name }}<br>
           <span v-if="birthplace">{{ birthplace }}<br></span>
           <span class="team">#{{ p.team_rank }} {{ p.team_location }}</span><br>

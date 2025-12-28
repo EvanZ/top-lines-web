@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch, inject } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import SeasonPlayerCard from '../components/SeasonPlayerCard.vue'
 import SettingsDrawer from '../components/SettingsDrawer.vue'
+import CompareToggle from '../components/CompareToggle.vue'
 import { usePlayerData, useConferences } from '../composables/usePlayerData.js'
 import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFilters.js'
 
@@ -160,6 +161,8 @@ onBeforeRouteLeave(() => {
 
 <template>
   <div class="season-rankings">
+    <CompareToggle v-model="compareEnabled" />
+
     <div class="page-header-row">
       <SettingsDrawer
         v-model:selectedClasses="selectedClasses"
@@ -168,12 +171,11 @@ onBeforeRouteLeave(() => {
         v-model:compareEnabled="compareEnabled"
         v-model:selectedConferences="selectedConferences"
         v-model:selectedPosition="selectedPosition"
-        :classes="classes"
-        :conferences="conferences"
-        :disableControls="compareEnabled"
-        showCompare
-        subtitle="Tune the rankings view"
-      />
+      :classes="classes"
+      :conferences="conferences"
+      :disableControls="compareEnabled"
+      subtitle="Tune the rankings view"
+    />
 
       <div class="page-header">
         <h1 class="page-title">Season Rankings</h1>

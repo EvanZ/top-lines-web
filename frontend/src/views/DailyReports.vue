@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch, inject } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import DailyPlayerCard from '../components/DailyPlayerCard.vue'
 import SettingsDrawer from '../components/SettingsDrawer.vue'
+import CompareToggle from '../components/CompareToggle.vue'
 import { usePlayerData, useConferences } from '../composables/usePlayerData.js'
 import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFilters.js'
 
@@ -165,6 +166,8 @@ onBeforeRouteLeave(() => {
 
 <template>
   <div class="daily-reports">
+    <CompareToggle v-model="compareEnabled" />
+
     <div class="page-header-row">
       <SettingsDrawer
         v-model:selectedClasses="selectedClasses"
@@ -174,13 +177,12 @@ onBeforeRouteLeave(() => {
         v-model:compareEnabled="compareEnabled"
         v-model:selectedConferences="selectedConferences"
         v-model:selectedPosition="selectedPosition"
-        :classes="classes"
-        :conferences="conferences"
-        :disableControls="compareEnabled"
-        showDateRange
-        showCompare
-        subtitle="Slice daily reports"
-      />
+      :classes="classes"
+      :conferences="conferences"
+      :disableControls="compareEnabled"
+      showDateRange
+      subtitle="Slice daily reports"
+    />
 
       <div class="page-header">
         <h1 class="page-title">Daily Reports</h1>
