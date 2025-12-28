@@ -47,7 +47,7 @@ const initials = computed(() => {
         <div class="voting-player-name">{{ player.name }}</div>
       </div>
         <div class="voting-player-meta">
-        {{ player.height }} / {{ player.weight }} lbs<br>
+        {{ player.height }} <span v-if="player.weight && player.weight !== '—'"> {{ player.weight }} lbs</span><br>
         {{ player.class }} {{ player.position }}<br>
         {{ player.team }}<br>
         <span v-if="player.birthplace">{{ player.birthplace }}</span>

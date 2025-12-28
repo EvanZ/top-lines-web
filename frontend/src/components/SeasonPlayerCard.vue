@@ -70,6 +70,7 @@
         </div>
       </div>
       <div class="ez-labels"><span>EZ</span><span>EZ75</span><span>Off</span><span>Def</span><span>Pass</span><span>Reb</span></div>
+      <slot name="glossary-after-ez" />
       <div class="card-player-info">
         <a :href="`https://www.espn.com/${espnPath}/player/_/id/${p.player_id}`" class="player-link" target="_blank">
           <img :src="p.headshot_href" class="player-photo" :alt="p.display_name">
@@ -77,7 +78,8 @@
       </a>
       <div class="player-details">
         <div class="player-meta">
-          {{ p.display_height }}<span v-if="p.display_weight"> | {{ p.display_weight }}</span><span v-if="age"> | {{ age }}</span><br>
+          {{ p.display_height }}<span v-if="p.display_weight">&nbsp;{{ p.display_weight }}</span><br>
+          <span v-if="age">Age {{ age }}<br></span>
           <span v-if="p.experience_display_value">{{ p.experience_display_value }} {{ p.position_display_name }}<br></span>
           <span v-if="birthplace">{{ birthplace }}<br></span>
           <span class="team">#{{ p.team_rank }} {{ p.team_location }} (SOS #{{ p.sos }})</span><br>
@@ -105,6 +107,7 @@
           </tr>
         </tbody>
       </table>
+      <slot name="glossary-after-usage" />
       <table class="stats-table">
         <thead>
           <tr><th>pts</th><th>ast</th><th>reb</th><th>stl</th><th>blk</th><th>tov</th></tr>
@@ -120,6 +123,7 @@
           </tr>
         </tbody>
       </table>
+      <slot name="glossary-after-pergame" />
       <table class="stats-table">
         <thead>
           <tr><th>dnk</th><th>dnk%</th><th>lay</th><th>lay%</th><th>mid</th><th>mid%</th></tr>
@@ -144,6 +148,7 @@
           </tr>
         </tbody>
       </table>
+      <slot name="glossary-after-shotmix" />
       <table class="stats-table">
         <thead>
           <tr><th>dnk ast%</th><th>lay ast%</th><th>mid ast%</th><th>3pt ast%</th></tr>
@@ -157,6 +162,7 @@
           </tr>
         </tbody>
       </table>
+      <slot name="glossary-after-assist-rates" />
       <table class="stats-table">
         <thead>
           <tr><th>2pt</th><th>2p%</th><th>3pt</th><th>3p%</th><th>ft</th><th>ft%</th><th>ftr</th></tr>
@@ -173,6 +179,7 @@
           </tr>
         </tbody>
       </table>
+      <slot name="glossary-after-shooting" />
       <table class="stats-table">
         <thead>
           <tr><th>astr</th><th>ast%</th><th>tor</th><th>to%</th><th>atr</th></tr>
@@ -187,6 +194,7 @@
           </tr>
         </tbody>
       </table>
+      <slot name="glossary-after-passing" />
       <table class="stats-table">
         <thead>
           <tr><th>st%</th><th>bk%</th><th>orr</th><th>or%</th><th>drr</th><th>dr%</th></tr>
@@ -202,6 +210,7 @@
           </tr>
         </tbody>
       </table>
+      <slot name="glossary-after-defense" />
       <table class="stats-table">
         <thead>
           <tr><th>dnk ast</th><th>dnk%</th><th>lay ast</th><th>lay%</th><th>mid ast</th><th>mid%</th><th>3pt ast</th><th>3pt%</th></tr>
@@ -219,6 +228,7 @@
           </tr>
         </tbody>
       </table>
+      <slot name="glossary-after-assist-distribution" />
     </div>
   </template>
   

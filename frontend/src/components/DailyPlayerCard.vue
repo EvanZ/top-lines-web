@@ -41,6 +41,7 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
       </div>
     </div>
     <div class="ez-labels"><span>EZ</span><span>EZ75</span></div>
+    <slot name="glossary-after-ez" />
     <div class="card-player-info">
       <a :href="`https://www.espn.com/${espnPath}/player/_/id/${p.player_id}`" class="player-link" target="_blank">
         <img :src="p.headshot_href" class="player-photo" :alt="p.display_name">
@@ -48,7 +49,8 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
       </a>
       <div class="player-details">
         <div class="player-meta">
-          {{ p.display_height }}<span v-if="p.display_weight"> | {{ p.display_weight }}</span><span v-if="age"> | {{ age }}</span><br>
+          {{ p.display_height }}<span v-if="p.display_weight">&nbsp;{{ p.display_weight }}</span><br>
+          <span v-if="age">Age&nbsp;{{ age }}</span><br>
           {{ p.experience_display_value }} {{ p.position_display_name }}<br>
           <span v-if="birthplace">{{ birthplace }}<br></span>
           <span class="team">#{{ p.team_rank }} {{ p.team_location }}</span><br>
@@ -82,6 +84,7 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
         </tr>
       </tbody>
     </table>
+    <slot name="glossary-after-box" />
     <table class="stats-table">
       <thead>
         <tr><th>usg%</th><th>ts%</th><th>ppp</th><th>ast%</th><th>tov%</th><th>orb%</th><th>drb%</th></tr>
@@ -98,6 +101,7 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
         </tr>
       </tbody>
     </table>
+    <slot name="glossary-after-rates" />
     <table class="stats-table">
       <thead>
         <tr><th>dunk</th><th>layup</th><th>mid</th><th>2pt</th><th>3pt</th><th>ft</th></tr>
@@ -113,20 +117,24 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
         </tr>
       </tbody>
     </table>
-    <table v-if="p.assists" class="stats-table assist-table">
-      <thead>
-        <tr><th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="pct-50">{{ p.assists?.dunks }}</td>
-          <td class="pct-50">{{ p.assists?.layups }}</td>
-          <td class="pct-50">{{ p.assists?.midrange }}</td>
-          <td class="pct-50">{{ (p.assists?.dunks || 0) + (p.assists?.layups || 0) + (p.assists?.midrange || 0) }}</td>
-          <td class="pct-50">{{ p.assists?.threes }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <slot name="glossary-after-shots" />
+    <template v-if="p.assists">
+      <table class="stats-table assist-table">
+        <thead>
+          <tr><th>dnk ast</th><th>lay ast</th><th>mid ast</th><th>2pt ast</th><th>3pt ast</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="pct-50">{{ p.assists?.dunks }}</td>
+            <td class="pct-50">{{ p.assists?.layups }}</td>
+            <td class="pct-50">{{ p.assists?.midrange }}</td>
+            <td class="pct-50">{{ (p.assists?.dunks || 0) + (p.assists?.layups || 0) + (p.assists?.midrange || 0) }}</td>
+            <td class="pct-50">{{ p.assists?.threes }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <slot name="glossary-after-assists" />
+    </template>
   </div>
 </template>
 

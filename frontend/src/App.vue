@@ -12,9 +12,10 @@ const theme = ref('dark')
 provide('gender', gender)
 
 const navLinks = [
-  { name: 'daily', label: 'Daily Reports', path: '/' },
-  { name: 'rankings', label: 'Season Rankings', path: '/rankings' },
-  { name: 'voting', label: 'Prospect Voting', path: '/voting' }
+  { name: 'daily', label: 'Games', path: '/' },
+  { name: 'rankings', label: 'Season', path: '/rankings' },
+  { name: 'voting', label: 'Voting', path: '/voting' },
+  { name: 'glossary', label: 'Glossary', path: '/glossary' }
 ]
 
 const isActive = (name) => {
@@ -404,6 +405,14 @@ a:hover {
     order: 3;
     width: 100%;
     justify-content: center;
+    flex-wrap: wrap;
+    row-gap: 0.4rem;
+  }
+
+  .nav-link {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
   }
 
   .main {
@@ -412,6 +421,18 @@ a:hover {
 
   .hero-banner {
     height: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav {
+    column-gap: 0.35rem;
+  }
+
+  .nav-link {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.03em;
   }
 }
 </style>
