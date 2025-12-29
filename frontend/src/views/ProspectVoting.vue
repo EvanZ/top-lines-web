@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import VotingCard from '../components/VotingCard.vue'
+import SeasonPlayerCard from '../components/SeasonPlayerCard.vue'
 
 const playerA = ref(null)
 const playerB = ref(null)
@@ -19,6 +20,9 @@ const eloRatings = ref([])
 const eloMeta = ref(null)
 const eloLoading = ref(true)
 const eloRatingsMap = ref(new Map())
+const seasonPlayersById = ref(new Map())
+const selectedSeasonPlayer = ref(null)
+const seasonModalOpen = ref(false)
 
 const apiBase = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '')
 const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
@@ -262,6 +266,14 @@ async function loadPool() {
   if (!rankingsResp.ok) throw new Error(`Unable to load rankings for ${date}`)
   const data = await rankingsResp.json()
 
+  const seasonMap = new Map()
+  ;(data.players || []).forEach((player) => {
+    if (player?.player_id) {
+      seasonMap.set(player.player_id, player)
+    }
+  })
+  seasonPlayersById.value = seasonMap
+
   const normalized = (data.players || []).map(normalizePlayer).filter(p => p.id)
   normalized.sort((a, b) => (b.ez || 0) - (a.ez || 0))
 
@@ -403,6 +415,21 @@ async function skip() {
   }
 }
 
+function openSeasonModal(playerId) {
+  const player = seasonPlayersById.value.get(playerId)
+  if (!player) {
+    console.warn('No season player data found for', playerId)
+    return
+  }
+  selectedSeasonPlayer.value = player
+  seasonModalOpen.value = true
+}
+
+function closeSeasonModal() {
+  seasonModalOpen.value = false
+  selectedSeasonPlayer.value = null
+}
+
 async function initialize() {
   loading.value = true
   error.value = null
@@ -497,13 +524,17 @@ onMounted(() => {
             <tr v-for="(p, idx) in eloRatings" :key="p.player_id">
               <td>{{ idx + 1 }}</td>
               <td>
-                <div class="elo-player">
+                <button
+                  type="button"
+                  class="elo-player"
+                  @click="openSeasonModal(p.player_id)"
+                >
                   <img v-if="p.headshot" :src="p.headshot" alt="" />
                   <div>
                     <div class="elo-name">{{ p.name }}</div>
                     <div class="elo-team">{{ p.team }}</div>
                   </div>
-                </div>
+                </button>
               </td>
               <td>{{ p.rating?.toFixed(1) }}</td>
               <td>{{ p.wins }}-{{ p.losses }}</td>
@@ -514,6 +545,24 @@ onMounted(() => {
         </table>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="seasonModalOpen"
+        class="season-modal-backdrop"
+        @click.self="closeSeasonModal"
+      >
+        <div class="season-modal">
+          <button class="season-modal-close" type="button" @click="closeSeasonModal">×</button>
+          <SeasonPlayerCard
+            v-if="selectedSeasonPlayer"
+            :player="selectedSeasonPlayer"
+            gender="men"
+          />
+          <div v-else class="season-modal-empty">Season card unavailable.</div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -692,6 +741,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  font: inherit;
 }
 
 .elo-player img {
@@ -709,5 +765,46 @@ onMounted(() => {
 .elo-team {
   color: var(--text-secondary);
   font-size: 0.85rem;
+}
+
+.season-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(6, 10, 20, 0.55);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.season-modal {
+  position: relative;
+  max-width: min(980px, 94vw);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 1.5rem;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.season-modal-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.season-modal-empty {
+  color: var(--text-secondary);
+  font-family: 'Sora', sans-serif;
+  padding: 1rem;
 }
 </style>
