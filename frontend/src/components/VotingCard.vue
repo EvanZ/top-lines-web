@@ -19,6 +19,11 @@ const ezDisplay = computed(() => {
   if (typeof ez !== 'number') return null
   return ez.toFixed(1)
 })
+const eloProbDisplay = computed(() => {
+  const prob = props.player?.elo_prob
+  if (!Number.isFinite(prob)) return null
+  return `${(prob * 100).toFixed(0)}%`
+})
 const initials = computed(() => {
   const name = props.player?.name || ''
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -35,6 +40,7 @@ const initials = computed(() => {
     @click="emit('vote')"
   >
     <div v-if="ezDisplay" class="voting-ez-badge" :class="ezClass">EZ {{ ezDisplay }}</div>
+    <div v-if="eloProbDisplay" class="voting-elo-badge">{{ eloProbDisplay }}</div>
     <div class="voting-header">
       <div class="voting-left">
         <img
@@ -162,6 +168,28 @@ const initials = computed(() => {
 .voting-ez-badge.pct-80 { border-color: #b4de2c; }
 .voting-ez-badge.pct-90 { border-color: #dce319; }
 .voting-ez-badge.pct-100 { border-color: #fde725; }
+
+.voting-elo-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--accent-gold);
+  font-family: 'Sora', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  z-index: 1;
+}
+
+:global(:root[data-theme="light"] .voting-elo-badge) {
+  background: rgba(255, 255, 255, 0.8);
+  color: #8f6300;
+}
 
 .voting-card.rsci::before {
   content: '';

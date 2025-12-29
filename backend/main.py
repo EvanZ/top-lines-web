@@ -127,6 +127,8 @@ class Vote(BaseModel):
     client_version: str | None = None
     seed_rating_a: float | None = None
     seed_rating_b: float | None = None
+    elo_prob_a: float | None = None
+    elo_prob_b: float | None = None
     impression_prob_a: float | None = None
     impression_prob_b: float | None = None
 
