@@ -9,6 +9,7 @@ import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFi
 
 const { players, meta, loading, error, loadDailyReport } = usePlayerData()
 const { conferences, loadConferences } = useConferences()
+const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
 
 // Inject gender from App.vue
 const gender = inject('gender')
@@ -128,8 +129,24 @@ const reloadData = async () => {
   ])
 }
 
+const refreshAvailableDate = async () => {
+  try {
+    const response = await fetch(`${dataBase}/manifest.json`, { cache: 'no-store' })
+    if (!response.ok) throw new Error(`Manifest HTTP ${response.status}`)
+    const manifest = await response.json()
+    const key = gender.value || 'men'
+    const dailyList = manifest?.[key]?.daily || []
+    availableDate.value = dailyList[0] || manifest?.latest_date || availableDate.value
+  } catch (e) {
+    console.error('Error loading manifest for daily reports:', e)
+  }
+}
+
 watch(dateRange, reloadData)
-watch(gender, reloadData)
+watch(gender, async () => {
+  await refreshAvailableDate()
+  await reloadData()
+})
 watch(selectedClasses, () => {
   compareEnabled.value = false
   selectedCompare.value = []
@@ -156,7 +173,10 @@ watch(
   { deep: true }
 )
 
-onMounted(reloadData)
+onMounted(async () => {
+  await refreshAvailableDate()
+  await reloadData()
+})
 
 onBeforeRouteLeave(() => {
   compareEnabled.value = false
