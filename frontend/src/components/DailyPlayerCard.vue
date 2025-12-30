@@ -72,7 +72,7 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
       <div class="player-badges">
         <span v-if="isRsci" class="rsci-badge">#{{ p.rsci_rank }} RSCI</span>
         <span v-if="hasElo" class="elo-badge">Elo #{{ p.elo_rank }} • {{ p.elo_rating?.toFixed(0) }}</span>
-        <span v-if="showSeasonRank" class="season-badge">{{ seasonRankLabel }}</span>
+        <span v-if="showSeasonRank && seasonRank" class="season-badge">{{ seasonRankLabel }}</span>
       </div>
     </div>
     <div class="game-info">
