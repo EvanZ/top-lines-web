@@ -222,8 +222,19 @@ onBeforeRouteLeave(() => {
         :key="player.player_id"
         class="compare-card"
         :class="{ 'is-selected': isSelected(player), 'is-compare': compareEnabled }"
-        @click="toggleCompare(player, $event)"
       >
+        <button
+          class="compare-toggle"
+          type="button"
+          @click="toggleCompare(player, $event)"
+          :aria-pressed="isSelected(player)"
+          :aria-label="isSelected(player) ? 'Remove from compare' : 'Add to compare'"
+          title="Select for compare"
+        >
+          <span class="toggle-track" :class="{ on: isSelected(player) }">
+            <span class="toggle-thumb"></span>
+          </span>
+        </button>
         <SeasonPlayerCard 
           :player="player"
           :gender="gender"
@@ -290,12 +301,75 @@ onBeforeRouteLeave(() => {
 }
 
 .compare-card {
-  cursor: pointer;
+  cursor: default;
+  position: relative;
 }
 
-.compare-card.is-selected :deep(.player-card) {
+.compare-card.is-selected {
   animation: compare-bounce 1s ease-in-out infinite;
   will-change: transform;
+}
+
+.compare-toggle {
+  position: absolute;
+  top: 3.55rem;
+  left: 0.75rem;
+  z-index: 2;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-family: 'Sora', sans-serif;
+  line-height: 1;
+  cursor: pointer;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.compare-toggle[aria-pressed="true"] {
+  filter: drop-shadow(0 2px 8px rgba(255, 212, 0, 0.5));
+}
+
+.compare-card:hover .compare-toggle {
+  transform: none;
+}
+
+.toggle-track {
+  display: inline-flex;
+  align-items: center;
+  width: 2.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-glow);
+  background: rgba(6, 12, 20, 0.75);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.toggle-track.on {
+  border-color: var(--accent-gold);
+  background: rgba(255, 212, 0, 0.18);
+}
+
+.toggle-thumb {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 999px;
+  background: var(--text-primary);
+  transform: translateX(0.1rem);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.toggle-track.on .toggle-thumb {
+  transform: translateX(1.1rem);
+  background: var(--accent-gold);
+}
+
+.compare-card:hover {
+  transform: translateY(-3px);
+}
+
+.compare-card :deep(.player-card:hover) {
+  transform: none;
 }
 
 @keyframes compare-bounce {

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch, inject } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import DailyPlayerCard from '../components/DailyPlayerCard.vue'
+import SeasonPlayerCard from '../components/SeasonPlayerCard.vue'
 import SettingsDrawer from '../components/SettingsDrawer.vue'
 import CompareToggle from '../components/CompareToggle.vue'
 import { usePlayerData, useConferences } from '../composables/usePlayerData.js'
@@ -24,6 +25,8 @@ const selectedPosition = ref('')
 const availableDate = ref('2025-12-23') // Latest available date
 const availableRankingsDate = ref('2025-12-23')
 const seasonPlayers = ref([])
+const selectedSeasonPlayer = ref(null)
+const seasonModalOpen = ref(false)
 
 const classes = ['freshman', 'sophomore', 'junior', 'senior']
 const savedFilters = loadSharedFilters()
@@ -127,6 +130,10 @@ const seasonRankMap = computed(() => {
   return map
 })
 
+const seasonPlayersById = computed(() => new Map(
+  seasonPlayers.value.map(player => [player.player_id, player])
+))
+
 const filteredPlayers = computed(() => {
   const base = baseFilteredPlayers.value
   if (!compareEnabled.value || selectedCompare.value.length === 0) {
@@ -174,6 +181,19 @@ function toggleCompare(player, event) {
   } else {
     selectedCompare.value = [...selectedCompare.value, key]
   }
+}
+
+function openSeasonModal(player, event) {
+  if (event?.target?.closest('a') || event?.target?.closest('.compare-toggle')) {
+    return
+  }
+  selectedSeasonPlayer.value = seasonPlayersById.value.get(player.player_id) || null
+  seasonModalOpen.value = true
+}
+
+function closeSeasonModal() {
+  seasonModalOpen.value = false
+  selectedSeasonPlayer.value = null
 }
 
 // Reload data when dateRange or gender changes
@@ -288,8 +308,20 @@ onBeforeRouteLeave(() => {
         :key="player.player_id + '-' + player.game_id"
         class="compare-card"
         :class="{ 'is-selected': isSelected(player), 'is-compare': compareEnabled }"
-        @click="toggleCompare(player, $event)"
+        @click="openSeasonModal(player, $event)"
       >
+        <button
+          class="compare-toggle"
+          type="button"
+          @click="toggleCompare(player, $event)"
+          :aria-pressed="isSelected(player)"
+          :aria-label="isSelected(player) ? 'Remove from compare' : 'Add to compare'"
+          title="Select for compare"
+        >
+          <span class="toggle-track" :class="{ on: isSelected(player) }">
+            <span class="toggle-thumb"></span>
+          </span>
+        </button>
         <DailyPlayerCard 
           :player="player"
           :gender="gender"
@@ -306,6 +338,24 @@ onBeforeRouteLeave(() => {
     <div v-if="!loading && players.length > 0" class="results-count">
       Showing {{ filteredPlayers.length }} of {{ players.length }} total players
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="seasonModalOpen"
+        class="season-modal-backdrop"
+        @click.self="closeSeasonModal"
+      >
+        <div class="season-modal">
+          <button class="season-modal-close" type="button" @click="closeSeasonModal">×</button>
+          <SeasonPlayerCard
+            v-if="selectedSeasonPlayer"
+            :player="selectedSeasonPlayer"
+            :gender="gender"
+          />
+          <div v-else class="season-modal-empty">Season card unavailable.</div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -352,12 +402,75 @@ onBeforeRouteLeave(() => {
 }
 
 .compare-card {
-  cursor: pointer;
+  cursor: default;
+  position: relative;
 }
 
-.compare-card.is-selected :deep(.player-card) {
+.compare-card.is-selected {
   animation: compare-bounce 1s ease-in-out infinite;
   will-change: transform;
+}
+
+.compare-toggle {
+  position: absolute;
+  top: 3.55rem;
+  left: 0.75rem;
+  z-index: 2;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-family: 'Sora', sans-serif;
+  line-height: 1;
+  cursor: pointer;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.compare-toggle[aria-pressed="true"] {
+  filter: drop-shadow(0 2px 8px rgba(255, 212, 0, 0.5));
+}
+
+.compare-card:hover .compare-toggle {
+  transform: none;
+}
+
+.toggle-track {
+  display: inline-flex;
+  align-items: center;
+  width: 2.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-glow);
+  background: rgba(6, 12, 20, 0.75);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.toggle-track.on {
+  border-color: var(--accent-gold);
+  background: rgba(255, 212, 0, 0.18);
+}
+
+.toggle-thumb {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 999px;
+  background: var(--text-primary);
+  transform: translateX(0.1rem);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.toggle-track.on .toggle-thumb {
+  transform: translateX(1.1rem);
+  background: var(--accent-gold);
+}
+
+.compare-card:hover {
+  transform: translateY(-3px);
+}
+
+.compare-card :deep(.player-card:hover) {
+  transform: none;
 }
 
 @keyframes compare-bounce {
@@ -416,6 +529,48 @@ onBeforeRouteLeave(() => {
   color: var(--text-secondary);
   font-family: 'Sora', sans-serif;
   grid-column: 1 / -1;
+}
+
+.season-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 6, 12, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.season-modal {
+  position: relative;
+  max-width: min(90vw, 520px);
+  padding-top: 0.5rem;
+}
+
+.season-modal-close {
+  position: absolute;
+  top: -0.6rem;
+  right: -0.2rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-glow);
+  border-radius: 999px;
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  z-index: 2;
+}
+
+.season-modal-empty {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  padding: 2rem;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-family: 'Sora', sans-serif;
+  text-align: center;
 }
 
 .results-count {

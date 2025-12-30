@@ -770,41 +770,42 @@ onMounted(() => {
 .season-modal-backdrop {
   position: fixed;
   inset: 0;
+  background: rgba(3, 6, 12, 0.75);
   z-index: 2000;
-  background: rgba(6, 10, 20, 0.55);
-  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
 }
 
 .season-modal {
   position: relative;
-  max-width: min(980px, 94vw);
-  max-height: 90vh;
-  overflow: auto;
-  padding: 1.5rem;
-  border-radius: 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-glow);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  max-width: min(90vw, 520px);
+  padding-top: 0.5rem;
 }
 
 .season-modal-close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.75rem;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 1.6rem;
+  top: -0.6rem;
+  right: -0.2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: 999px;
+  width: 2rem;
+  height: 2rem;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  line-height: 1;
   cursor: pointer;
+  z-index: 2;
 }
 
 .season-modal-empty {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: 12px;
+  text-align: center;
   color: var(--text-secondary);
   font-family: 'Sora', sans-serif;
-  padding: 1rem;
+  padding: 2rem;
 }
 </style>
