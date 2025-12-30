@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import Sparkline from './Sparkline.vue'
 const props = defineProps({ 
   player: Object,
   gender: { type: String, default: 'men' },
@@ -49,6 +50,9 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
       </div>
     </div>
     <div class="ez-labels"><span>Game</span><span>Season</span></div>
+    <div v-if="p.ez_history?.length" class="sparkline-row">
+      <Sparkline :values="p.ez_history" />
+    </div>
     <slot name="glossary-after-ez" />
     <div class="card-player-info">
       <a :href="`https://www.espn.com/${espnPath}/player/_/id/${p.player_id}`" class="player-link" target="_blank">

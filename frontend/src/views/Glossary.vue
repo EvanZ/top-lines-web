@@ -25,6 +25,7 @@ const withPercentile = (items) => [...items, percentileItem]
 
 const dailyGlossary = {
   ez: [
+    { label: 'Sparkline', formula: 'EZ score over the past 10 games' },
     { label: 'Game EZ', formula: 'round(REB + SCOR + PASS + STOCKS, 3) in stage_top_lines' },
     { label: 'Season EZ', formula: 'round(sum(EZ) / games_played, 1)' },
     { label: 'REB', formula: '0.6*ORB/adj_orb + 0.3*DRB/adj_drb' },
@@ -74,6 +75,7 @@ const dailyGlossary = {
 
 const seasonGlossary = {
   ez: [
+    { label: 'Sparkline', formula: 'EZ score over the past 10 games' },
     { label: 'EZ', formula: 'EZ_TOTAL / GP (EZ_TOTAL = sum(ez) from stage_top_lines)' },
     { label: 'EZ75', formula: '75 * EZ_TOTAL / (team_poss * minutes / team_minutes)' },
     { label: 'OFF', formula: '75 * ez_scoring / (team_poss * minutes / team_minutes)' },

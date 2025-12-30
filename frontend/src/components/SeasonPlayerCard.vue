@@ -1,5 +1,6 @@
 <script setup>
   import { computed } from 'vue'
+  import Sparkline from './Sparkline.vue'
   const props = defineProps({ 
     player: Object,
     gender: { type: String, default: 'men' }
@@ -70,6 +71,9 @@
         </div>
       </div>
       <div class="ez-labels"><span>EZ</span><span>EZ75</span><span>Off</span><span>Def</span><span>Pass</span><span>Reb</span></div>
+      <div v-if="p.ez_history?.length" class="sparkline-row">
+        <Sparkline :values="p.ez_history" />
+      </div>
       <slot name="glossary-after-ez" />
       <div class="card-player-info">
         <a :href="`https://www.espn.com/${espnPath}/player/_/id/${p.player_id}`" class="player-link" target="_blank">

@@ -364,6 +364,24 @@ onBeforeRouteLeave(() => {
   background: var(--accent-gold);
 }
 
+:global(:root[data-theme="light"] .compare-toggle) {
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.15));
+}
+
+:global(:root[data-theme="light"] .toggle-track) {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+:global(:root[data-theme="light"] .toggle-track.on) {
+  border-color: rgba(255, 170, 0, 0.65);
+  background: rgba(255, 200, 0, 0.2);
+}
+
+:global(:root[data-theme="light"] .toggle-thumb) {
+  background: rgba(20, 20, 20, 0.8);
+}
+
 .compare-card:hover {
   transform: translateY(-3px);
 }
