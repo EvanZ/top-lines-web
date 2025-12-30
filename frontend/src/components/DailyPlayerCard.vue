@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import Sparkline from './Sparkline.vue'
 const props = defineProps({ 
   player: Object,
@@ -7,6 +7,9 @@ const props = defineProps({
   showSeasonRank: { type: Boolean, default: false }
 })
 const p = computed(() => props.player)
+const fallbackHeadshot = new URL('../assets/player-placeholder.svg', import.meta.url).href
+const headshotSrc = ref(fallbackHeadshot)
+const isFallbackHeadshot = ref(true)
 const isRsci = computed(() => !!p.value.rsci_rank)
 const hasElo = computed(() => p.value.elo_rating != null)
 const seasonRank = computed(() => {
@@ -31,6 +34,25 @@ const dateParts = computed(() => {
 })
 const birthplace = computed(() => p.value.city && p.value.state ? `${p.value.city}, ${p.value.state}` : null)
 const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25).toFixed(1) : null)
+const initials = computed(() => {
+  const name = (p.value.display_name || '').trim()
+  if (!name) return '?'
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase()
+})
+
+watch(
+  () => p.value?.headshot_href,
+  (src) => {
+    headshotSrc.value = src || fallbackHeadshot
+    isFallbackHeadshot.value = !src
+  },
+  { immediate: true }
+)
+
+const onHeadshotError = () => {
+  headshotSrc.value = fallbackHeadshot
+  isFallbackHeadshot.value = true
+}
 </script>
 
 <template>
@@ -56,7 +78,10 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
     <slot name="glossary-after-ez" />
     <div class="card-player-info">
       <a :href="`https://www.espn.com/${espnPath}/player/_/id/${p.player_id}`" class="player-link" target="_blank">
-        <img :src="p.headshot_href" class="player-photo" :alt="p.display_name">
+        <span class="player-photo-frame" :class="{ placeholder: isFallbackHeadshot }">
+          <img :src="headshotSrc" class="player-photo" :alt="p.display_name" @error="onHeadshotError">
+          <span v-if="isFallbackHeadshot" class="player-initials">{{ initials }}</span>
+        </span>
         <div class="player-name-photo"><span class="jersey">#{{ p.jersey }}</span> {{ p.display_name }}</div>
       </a>
       <div class="player-details">
