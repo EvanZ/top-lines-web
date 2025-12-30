@@ -22,6 +22,8 @@ const selectedCompare = ref([])
 const selectedConferences = ref([])
 const selectedPosition = ref('')
 const availableDate = ref('2025-12-23') // Latest available date
+const availableRankingsDate = ref('2025-12-23')
+const seasonPlayers = ref([])
 
 const classes = ['freshman', 'sophomore', 'junior', 'senior']
 const savedFilters = loadSharedFilters()
@@ -49,6 +51,34 @@ const combinedRankScore = (player) => {
   return Number.isFinite(ez) ? ez : 0
 }
 
+const seasonRankScore = (player) => {
+  const gp = Number(player?.gp)
+  const ez = Number(player?.ez)
+  if (!Number.isFinite(gp) || gp <= 0) return 0
+  return Number.isFinite(ez) ? ez / gp : 0
+}
+
+const loadSeasonRankings = async (date, gender = 'men') => {
+  if (!date) {
+    seasonPlayers.value = []
+    return
+  }
+  try {
+    const response = await fetch(`${dataBase}/${gender}/rankings/${date}.json`, { cache: 'no-store' })
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const data = await response.json()
+    seasonPlayers.value = data.players.map(p => ({
+      ...p,
+      classLower: (p.experience_display_value || 'freshman').toLowerCase(),
+      rsci_rank: p.recruit_rank,
+      conference: p.team_conf
+    }))
+  } catch (e) {
+    console.error('Error loading season rankings for daily report:', e)
+    seasonPlayers.value = []
+  }
+}
+
 const baseFilteredPlayers = computed(() => {
   const selected = new Set(selectedClasses.value)
   const filtered = players.value.filter(player => {
@@ -73,6 +103,30 @@ const baseFilteredPlayers = computed(() => {
   return filtered
 })
 
+const filteredSeasonPlayers = computed(() => {
+  const selected = new Set(selectedClasses.value)
+  const filtered = seasonPlayers.value.filter(player => {
+    if (selected.size && !selected.has(player.classLower)) return false
+    if (rsciOnly.value && !player.rsci_rank) return false
+    if (selectedConferences.value.length > 0 && 
+        !selectedConferences.value.includes(player.conference)) return false
+    if (selectedPosition.value && player.position_display_name !== selectedPosition.value) return false
+    return true
+  })
+  if (selectedClasses.value.length > 1) {
+    return filtered.sort((a, b) => seasonRankScore(b) - seasonRankScore(a))
+  }
+  return filtered.sort((a, b) => (a.class_rank || 0) - (b.class_rank || 0))
+})
+
+const seasonRankMap = computed(() => {
+  const map = new Map()
+  filteredSeasonPlayers.value.forEach((player, idx) => {
+    map.set(player.player_id, idx + 1)
+  })
+  return map
+})
+
 const filteredPlayers = computed(() => {
   const base = baseFilteredPlayers.value
   if (!compareEnabled.value || selectedCompare.value.length === 0) {
@@ -85,7 +139,8 @@ const filteredPlayers = computed(() => {
 const rankedPlayers = computed(() => (
   filteredPlayers.value.map((player, idx) => ({
     ...player,
-    display_rank: idx + 1
+    display_rank: idx + 1,
+    season_rank: seasonRankMap.value.get(player.player_id) ?? null
   }))
 ))
 
@@ -123,8 +178,10 @@ function toggleCompare(player, event) {
 
 // Reload data when dateRange or gender changes
 const reloadData = async () => {
+  const seasonDate = availableRankingsDate.value || availableDate.value
   await Promise.all([
     loadDailyReport(availableDate.value, dateRange.value, gender.value),
+    loadSeasonRankings(seasonDate, gender.value),
     loadConferences(gender.value)
   ])
 }
@@ -136,7 +193,9 @@ const refreshAvailableDate = async () => {
     const manifest = await response.json()
     const key = gender.value || 'men'
     const dailyList = manifest?.[key]?.daily || []
+    const rankingsList = manifest?.[key]?.rankings || []
     availableDate.value = dailyList[0] || manifest?.latest_date || availableDate.value
+    availableRankingsDate.value = rankingsList[0] || manifest?.latest_date || availableRankingsDate.value
   } catch (e) {
     console.error('Error loading manifest for daily reports:', e)
   }
@@ -234,6 +293,7 @@ onBeforeRouteLeave(() => {
         <DailyPlayerCard 
           :player="player"
           :gender="gender"
+          :showSeasonRank="true"
         />
       </div>
       

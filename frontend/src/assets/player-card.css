@@ -201,6 +201,18 @@
   margin-top: 0.25rem;
   border: 1px solid #ffd400;
 }
+.season-badge {
+  display: inline-block;
+  background: transparent;
+  color: var(--accent-cyan);
+  font-family: 'Sora', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  margin-top: 0.25rem;
+  border: 1px solid var(--accent-cyan);
+}
 .game-info {
   border-radius: 6px;
   border-left: 3px solid var(--accent-cyan);

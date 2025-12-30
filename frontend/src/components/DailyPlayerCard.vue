@@ -2,11 +2,19 @@
 import { computed } from 'vue'
 const props = defineProps({ 
   player: Object,
-  gender: { type: String, default: 'men' }
+  gender: { type: String, default: 'men' },
+  showSeasonRank: { type: Boolean, default: false }
 })
 const p = computed(() => props.player)
 const isRsci = computed(() => !!p.value.rsci_rank)
 const hasElo = computed(() => p.value.elo_rating != null)
+const seasonRank = computed(() => {
+  const rank = Number(p.value.season_rank)
+  return Number.isFinite(rank) && rank > 0 ? rank : null
+})
+const seasonRankLabel = computed(() => (
+  seasonRank.value ? `EZ #${seasonRank.value}` : 'EZ N/R'
+))
 const espnPath = computed(() => props.gender === 'women' ? 'womens-college-basketball' : 'mens-college-basketball')
 const pct = (val) => `pct-${Math.round(((val ?? 50) / 10)) * 10}`
 const teamLogo = computed(() => p.value.team_logo)
@@ -60,6 +68,7 @@ const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25
       <div class="player-badges">
         <span v-if="isRsci" class="rsci-badge">#{{ p.rsci_rank }} RSCI</span>
         <span v-if="hasElo" class="elo-badge">Elo #{{ p.elo_rank }} • {{ p.elo_rating?.toFixed(0) }}</span>
+        <span v-if="showSeasonRank" class="season-badge">{{ seasonRankLabel }}</span>
       </div>
     </div>
     <div class="game-info">
