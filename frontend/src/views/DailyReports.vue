@@ -21,12 +21,13 @@ const rsciOnly = ref(false)
 const compareEnabled = ref(false)
 const selectedCompare = ref([])
 const selectedConferences = ref([])
+const flippedCards = ref(new Set())
+const flipAnimating = ref(new Set())
+let flipTimer = null
 const selectedPosition = ref('')
 const availableDate = ref('2025-12-23') // Latest available date
 const availableRankingsDate = ref('2025-12-23')
 const seasonPlayers = ref([])
-const selectedSeasonPlayer = ref(null)
-const seasonModalOpen = ref(false)
 
 const classes = ['freshman', 'sophomore', 'junior', 'senior']
 const savedFilters = loadSharedFilters()
@@ -134,6 +135,8 @@ const seasonPlayersById = computed(() => new Map(
   seasonPlayers.value.map(player => [player.player_id, player])
 ))
 
+const seasonPlayerFor = (playerId) => seasonPlayersById.value.get(playerId)
+
 const filteredPlayers = computed(() => {
   const base = baseFilteredPlayers.value
   if (!compareEnabled.value || selectedCompare.value.length === 0) {
@@ -183,18 +186,31 @@ function toggleCompare(player, event) {
   }
 }
 
-function openSeasonModal(player, event) {
+function toggleCardFlip(player, event) {
   if (event?.target?.closest('a') || event?.target?.closest('.compare-toggle')) {
     return
   }
-  selectedSeasonPlayer.value = seasonPlayersById.value.get(player.player_id) || null
-  seasonModalOpen.value = true
+  const key = playerKey(player)
+  const nextAnim = new Set(flipAnimating.value)
+  nextAnim.add(key)
+  flipAnimating.value = nextAnim
+  const next = new Set(flippedCards.value)
+  if (next.has(key)) {
+    next.delete(key)
+  } else {
+    next.add(key)
+  }
+  flippedCards.value = next
+  if (flipTimer) {
+    clearTimeout(flipTimer)
+  }
+  flipTimer = setTimeout(() => {
+    const updated = new Set(flipAnimating.value)
+    updated.delete(key)
+    flipAnimating.value = updated
+  }, 650)
 }
 
-function closeSeasonModal() {
-  seasonModalOpen.value = false
-  selectedSeasonPlayer.value = null
-}
 
 // Reload data when dateRange or gender changes
 const reloadData = async () => {
@@ -286,8 +302,9 @@ onBeforeRouteLeave(() => {
       <div class="page-header">
         <h1 class="page-title">Daily Reports</h1>
         <p class="page-subtitle">
-          Top prospect performances 
-          <span v-if="dateRangeText">from {{ dateRangeText }}</span>
+          Top performances 
+          <span v-if="dateRangeText">from {{ dateRangeText }}.</span>
+          <span>&nbsp;Click to flip cards between daily and season performance.</span>
         </p>
       </div>
     </div>
@@ -307,8 +324,8 @@ onBeforeRouteLeave(() => {
         v-for="player in rankedPlayers"
         :key="player.player_id + '-' + player.game_id"
         class="compare-card"
-        :class="{ 'is-selected': isSelected(player), 'is-compare': compareEnabled }"
-        @click="openSeasonModal(player, $event)"
+        :class="{ 'is-selected': isSelected(player), 'is-compare': compareEnabled, flipped: flippedCards.has(playerKey(player)), 'flip-anim': flipAnimating.has(playerKey(player)) }"
+        @click="toggleCardFlip(player, $event)"
       >
         <button
           class="compare-toggle"
@@ -322,11 +339,25 @@ onBeforeRouteLeave(() => {
             <span class="toggle-thumb"></span>
           </span>
         </button>
-        <DailyPlayerCard 
-          :player="player"
-          :gender="gender"
-          :showSeasonRank="true"
-        />
+        <div class="flip-card">
+          <div class="flip-card-inner">
+            <div class="flip-card-face flip-card-front">
+              <DailyPlayerCard 
+                :player="player"
+                :gender="gender"
+                :showSeasonRank="true"
+              />
+            </div>
+            <div class="flip-card-face flip-card-back">
+              <SeasonPlayerCard
+                v-if="seasonPlayerFor(player.player_id)"
+                :player="seasonPlayerFor(player.player_id)"
+                :gender="gender"
+              />
+              <div v-else class="season-modal-empty">Season card unavailable.</div>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div v-if="rankedPlayers.length === 0" class="no-data">
@@ -339,23 +370,6 @@ onBeforeRouteLeave(() => {
       Showing {{ filteredPlayers.length }} of {{ players.length }} total players
     </div>
 
-    <Teleport to="body">
-      <div
-        v-if="seasonModalOpen"
-        class="season-modal-backdrop"
-        @click.self="closeSeasonModal"
-      >
-        <div class="season-modal">
-          <button class="season-modal-close" type="button" @click="closeSeasonModal">×</button>
-          <SeasonPlayerCard
-            v-if="selectedSeasonPlayer"
-            :player="selectedSeasonPlayer"
-            :gender="gender"
-          />
-          <div v-else class="season-modal-empty">Season card unavailable.</div>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
@@ -404,7 +418,13 @@ onBeforeRouteLeave(() => {
 .compare-card {
   cursor: default;
   position: relative;
+  perspective: 1200px;
 }
+
+.compare-card.flip-anim .compare-toggle {
+  animation: toggle-pop 0.6s ease;
+}
+
 
 .compare-card.is-selected {
   animation: compare-bounce 1s ease-in-out infinite;
@@ -491,12 +511,58 @@ onBeforeRouteLeave(() => {
   transform: none;
 }
 
+.flip-card {
+  position: relative;
+  max-height: 520px;
+  overflow: hidden;
+  transition: max-height 0.5s ease;
+}
+
+.flip-card-inner {
+  position: relative;
+  transition: transform 0.6s ease;
+  transform-style: preserve-3d;
+  display: grid;
+}
+
+.compare-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+
+.compare-card.flipped .flip-card {
+  max-height: 900px;
+}
+
+.flip-card-face {
+  grid-area: 1 / 1;
+  width: 100%;
+  backface-visibility: hidden;
+  transform: translateZ(1px);
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
 @keyframes compare-bounce {
   0%, 100% {
     transform: translateY(0);
   }
   50% {
     transform: translateY(-4px);
+  }
+}
+
+@keyframes toggle-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
@@ -547,38 +613,6 @@ onBeforeRouteLeave(() => {
   color: var(--text-secondary);
   font-family: 'Sora', sans-serif;
   grid-column: 1 / -1;
-}
-
-.season-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(3, 6, 12, 0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.season-modal {
-  position: relative;
-  max-width: min(90vw, 520px);
-  padding-top: 0.5rem;
-}
-
-.season-modal-close {
-  position: absolute;
-  top: -0.6rem;
-  right: -0.2rem;
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border: 1px solid var(--border-glow);
-  border-radius: 999px;
-  width: 2rem;
-  height: 2rem;
-  cursor: pointer;
-  font-size: 1.25rem;
-  line-height: 1;
-  z-index: 2;
 }
 
 .season-modal-empty {
