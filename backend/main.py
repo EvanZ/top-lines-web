@@ -1,6 +1,7 @@
 import json
 import os
 import hashlib
+import re
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -22,6 +23,12 @@ THROTTLE_WINDOW = timedelta(
 )  # default 5 minutes
 THROTTLE_MAX = int(os.environ.get("THROTTLE_MAX", 300))  # default 300 votes per window
 _recent_votes: defaultdict[str, deque[datetime]] = defaultdict(deque)
+FEEDBACK_THROTTLE_WINDOW = timedelta(
+    seconds=int(os.environ.get("FEEDBACK_THROTTLE_WINDOW_SECONDS", 300))
+)
+FEEDBACK_THROTTLE_MAX = int(os.environ.get("FEEDBACK_THROTTLE_MAX", 50))
+_recent_feedback: defaultdict[str, deque[datetime]] = defaultdict(deque)
+INVALID_TEXT_PATTERN = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f<>]")
 
 
 def votes_base_path() -> Path:
@@ -43,6 +50,24 @@ def s3_client():
 def s3_votes_config() -> tuple[str | None, str]:
     bucket = os.environ.get("S3_BUCKET")
     prefix = os.environ.get("S3_VOTES_PREFIX", "votes/")
+    return bucket, prefix.rstrip("/") + "/"
+
+
+def feedback_base_path() -> Path:
+    """
+    Resolve where feedback records should be stored.
+    Defaults to <DAGSTER_HOME>/data/web/feedback for local dev.
+    """
+    base = os.environ.get("FEEDBACK_PATH")
+    if base:
+        return Path(base)
+    dagster_home = os.environ.get("DAGSTER_HOME", ".")
+    return Path(dagster_home) / "data" / "web" / "feedback"
+
+
+def s3_feedback_config() -> tuple[str | None, str]:
+    bucket = os.environ.get("S3_FEEDBACK_BUCKET") or os.environ.get("S3_BUCKET")
+    prefix = os.environ.get("S3_FEEDBACK_PREFIX", "feedback/")
     return bucket, prefix.rstrip("/") + "/"
 
 
@@ -95,23 +120,28 @@ def hash_ip(ip: str | None) -> str | None:
     return hashlib.sha256(f"{ip}{salt}".encode("utf-8")).hexdigest()
 
 
-def throttled(ip_hash: str | None) -> bool:
+def throttled(
+    ip_hash: str | None,
+    store: defaultdict[str, deque[datetime]] = _recent_votes,
+    window: timedelta = THROTTLE_WINDOW,
+    limit: int = THROTTLE_MAX,
+) -> bool:
     """
     Simple in-memory throttle keyed by hashed IP.
     Returns True if the caller exceeded the window/limit and records the timestamp otherwise.
     """
-    if not ip_hash or THROTTLE_MAX <= 0:
+    if not ip_hash or limit <= 0:
         return False
 
     now = datetime.utcnow()
-    cutoff = now - THROTTLE_WINDOW
-    dq = _recent_votes[ip_hash]
+    cutoff = now - window
+    dq = store[ip_hash]
 
     # Drop timestamps outside the window
     while dq and dq[0] < cutoff:
         dq.popleft()
 
-    if len(dq) >= THROTTLE_MAX:
+    if len(dq) >= limit:
         return True
 
     dq.append(now)
@@ -131,6 +161,15 @@ class Vote(BaseModel):
     elo_prob_b: float | None = None
     impression_prob_a: float | None = None
     impression_prob_b: float | None = None
+
+
+class Feedback(BaseModel):
+    message: str = Field(..., min_length=1, max_length=1000, description="User-submitted message")
+    contact: str | None = Field(
+        None, max_length=200, description="Optional contact info (email or handle)"
+    )
+    path: str | None = Field(None, description="Page path where feedback was sent")
+    client_version: str | None = None
 
 
 app = FastAPI(title="Top Lines Voting API", version="0.1.0")
@@ -227,6 +266,73 @@ async def submit_vote(vote: Vote, request: Request) -> dict:
 async def vote_options() -> dict:
     """
     Explicit preflight handler for vote endpoint (helps when proxies strip CORS headers).
+    """
+    return {"status": "ok"}
+
+
+@app.post("/api/feedback")
+async def submit_feedback(feedback: Feedback, request: Request) -> dict:
+    received_at = datetime.utcnow()
+    request_id = uuid4().hex
+    ip, ip_source = get_client_ip(request)
+
+    message = (feedback.message or "").strip()
+    contact = (feedback.contact or "").strip() or None
+
+    if not message:
+        raise HTTPException(status_code=400, detail="Feedback message is required.")
+    if INVALID_TEXT_PATTERN.search(message):
+        raise HTTPException(status_code=400, detail="Feedback must be plain text.")
+    if contact and INVALID_TEXT_PATTERN.search(contact):
+        raise HTTPException(status_code=400, detail="Contact info must be plain text.")
+
+    record = {
+        "request_id": request_id,
+        "received_at": received_at.isoformat(),
+        "message": message,
+        "contact": contact,
+        "path": feedback.path,
+        "client_version": feedback.client_version,
+        "user_agent": request.headers.get("user-agent"),
+        "ip_hash": hash_ip(ip),
+        "ip_source": ip_source,
+    }
+
+    if throttled(
+        record["ip_hash"],
+        store=_recent_feedback,
+        window=FEEDBACK_THROTTLE_WINDOW,
+        limit=FEEDBACK_THROTTLE_MAX,
+    ):
+        raise HTTPException(
+            status_code=429, detail="Too many feedback submissions from this IP. Please slow down."
+        )
+
+    if ENVIRONMENT == "PROD":
+        bucket, prefix = s3_feedback_config()
+        if not bucket:
+            raise HTTPException(status_code=500, detail="S3_FEEDBACK_BUCKET not configured for PROD")
+        key = f"{prefix}{received_at.strftime('%Y-%m-%d')}/{request_id}.json"
+        s3_client().put_object(
+            Bucket=bucket,
+            Key=key,
+            Body=json.dumps(record, ensure_ascii=False, indent=2).encode("utf-8"),
+            ContentType="application/json",
+        )
+    else:
+        base_path = feedback_base_path()
+        target_dir = base_path / received_at.strftime("%Y-%m-%d")
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target_file = target_dir / f"{request_id}.json"
+        target_file.write_text(json.dumps(record, ensure_ascii=False, indent=2))
+
+    return {"status": "ok", "id": request_id}
+
+
+@app.options("/api/feedback")
+async def feedback_options() -> dict:
+    """
+    Explicit preflight handler for feedback endpoint.
     """
     return {"status": "ok"}
 

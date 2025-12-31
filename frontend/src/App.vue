@@ -1,12 +1,25 @@
 <script setup>
 import { ref, provide, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import FeedbackModal from './components/FeedbackModal.vue'
 
 const router = useRouter()
 const route = useRoute()
 
 const gender = ref('men')
 const theme = ref('dark')
+const feedbackOpen = ref(false)
+const feedbackMessage = ref('')
+const feedbackContact = ref('')
+const feedbackSubmitting = ref(false)
+const feedbackError = ref('')
+const feedbackSuccess = ref(false)
+const FEEDBACK_MAX_LENGTH = 1000
+const INVALID_TEXT_PATTERN = /[\x00-\x08\x0B\x0C\x0E-\x1F<>]/
+const FEEDBACK_TOAST_MS = 3000
+const apiBase = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '')
+const feedbackEndpoint = `${apiBase}/api/feedback`
+let feedbackToastTimer = null
 
 const navLinks = [
   { name: 'daily', label: 'Games', path: '/' },
@@ -26,6 +39,80 @@ const applyTheme = (value) => {
 
 const toggleTheme = () => {
   theme.value = theme.value === 'dark' ? 'light' : 'dark'
+}
+
+const clearFeedbackToast = () => {
+  if (feedbackToastTimer) {
+    clearTimeout(feedbackToastTimer)
+    feedbackToastTimer = null
+  }
+}
+
+const openFeedback = () => {
+  clearFeedbackToast()
+  feedbackError.value = ''
+  feedbackSuccess.value = false
+  feedbackOpen.value = true
+}
+
+const closeFeedback = () => {
+  clearFeedbackToast()
+  feedbackOpen.value = false
+}
+
+const validateFeedback = (message, contact) => {
+  if (!message) return 'Please enter a message.'
+  if (message.length > FEEDBACK_MAX_LENGTH) return 'Feedback is too long.'
+  if (INVALID_TEXT_PATTERN.test(message)) return 'Message must be plain text only.'
+  if (contact && INVALID_TEXT_PATTERN.test(contact)) return 'Contact info must be text only.'
+  if (contact && contact.length > 200) return 'Contact info is too long.'
+  return null
+}
+
+const submitFeedback = async () => {
+  feedbackError.value = ''
+  feedbackSuccess.value = false
+  const message = feedbackMessage.value.trim()
+  const contact = feedbackContact.value.trim()
+  const validationError = validateFeedback(message, contact)
+  if (validationError) {
+    feedbackError.value = validationError
+    return
+  }
+
+  feedbackSubmitting.value = true
+  try {
+    const payload = {
+      message,
+      contact: contact || undefined,
+      path: typeof window !== 'undefined' ? window.location.pathname : undefined
+    }
+    const resp = await fetch(feedbackEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => null)
+      const detail = data?.detail || `HTTP ${resp.status}`
+      throw new Error(typeof detail === 'string' ? detail : 'Unable to send feedback')
+    }
+    feedbackSuccess.value = true
+    feedbackMessage.value = ''
+    feedbackContact.value = ''
+    clearFeedbackToast()
+    if (typeof window !== 'undefined') {
+      feedbackToastTimer = window.setTimeout(() => {
+        closeFeedback()
+      }, FEEDBACK_TOAST_MS)
+    } else {
+      closeFeedback()
+    }
+  } catch (err) {
+    feedbackError.value = err?.message || 'Unable to send feedback right now.'
+  } finally {
+    feedbackSubmitting.value = false
+  }
 }
 
 // Provide shared app state to all child components
@@ -101,8 +188,23 @@ watch(gender, (value) => {
       <p>© 2025 Top Lines! — NBA Draft Prospect Analytics</p>
       <p class="footer-links">
         <a href="https://patreon.com/toplines" target="_blank">Support on Patreon</a>
+        <button class="footer-feedback" type="button" @click="openFeedback">Send Feedback</button>
       </p>
     </footer>
+
+    <FeedbackModal
+      :open="feedbackOpen"
+      :message="feedbackMessage"
+      :contact="feedbackContact"
+      :submitting="feedbackSubmitting"
+      :error="feedbackError"
+      :success="feedbackSuccess"
+      :max-length="FEEDBACK_MAX_LENGTH"
+      @close="closeFeedback"
+      @submit="submitFeedback"
+      @update:message="feedbackMessage = $event"
+      @update:contact="feedbackContact = $event"
+    />
   </div>
 </template>
 
@@ -320,10 +422,37 @@ a:hover {
 
 .footer-links {
   margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .footer-links a {
   color: var(--accent-cyan);
+}
+
+.footer-feedback {
+  padding: 0.45rem 0.9rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-glow);
+  background: rgba(0, 212, 255, 0.08);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.footer-feedback:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 212, 255, 0.18);
+}
+
+.footer-feedback:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 /* Responsive */
