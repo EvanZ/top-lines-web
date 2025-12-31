@@ -67,11 +67,14 @@ const startTimeLabel = computed(() => {
   return dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 })
 
-const startDateLabel = computed(() => {
+const startDateParts = computed(() => {
   const raw = props.game?.start_time
-  if (!raw) return ''
+  if (!raw) return null
   const dt = new Date(raw)
-  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return {
+    month: dt.toLocaleDateString('en-US', { month: 'short' }),
+    day: dt.toLocaleDateString('en-US', { day: 'numeric' }),
+  }
 })
 
 const conferenceLabel = computed(() => (
@@ -86,6 +89,20 @@ const spreadLabel = computed(() => {
   const side = fav === 'home' ? (home.value?.abbrev || 'HOME') : fav === 'away' ? (away.value?.abbrev || 'AWAY') : ''
   const prefix = spread > 0 ? '+' : ''
   return side ? `${side} ${prefix}${spread}` : `${prefix}${spread}`
+})
+
+const venueLabel = computed(() => props.game?.venue || '')
+const venueLocation = computed(() => {
+  const city = props.game?.venue_city
+  const state = props.game?.venue_state
+  const country = props.game?.venue_country
+  const locParts = [city, state].filter(Boolean)
+  if (!locParts.length && country) locParts.push(country)
+  return locParts.join(', ')
+})
+const venueLine = computed(() => {
+  if (venueLabel.value && venueLocation.value) return `${venueLabel.value} — ${venueLocation.value}`
+  return venueLabel.value || venueLocation.value || ''
 })
 
 const playerRankLabel = (player) => {
@@ -208,7 +225,10 @@ onUnmounted(() => {
         <header class="card-header">
           <div class="time-block">
             <span class="time">{{ startTimeLabel }}</span>
-            <span class="date">{{ startDateLabel }}</span>
+            <span v-if="startDateParts" class="game-date-badge">
+              <span class="date-month">{{ startDateParts.month }}</span>
+              <span class="date-day">{{ startDateParts.day }}</span>
+            </span>
           </div>
           <div class="conference-pill" :class="{ power: powerMatchup }">
             {{ conferenceLabel }}
@@ -227,7 +247,7 @@ onUnmounted(() => {
             <div class="team-copy">
               <div class="team-name">{{ home.location || home.name || 'Home' }}</div>
               <div class="team-sub">
-                <span class="abbr">{{ home.abbrev || 'HOME' }}</span>
+                <!-- <span class="abbr">{{ home.abbrev || 'HOME' }}</span> -->
                 <span class="record">{{ recordLabel(home) }}</span>
               </div>
             </div>
@@ -241,13 +261,18 @@ onUnmounted(() => {
               <div class="team-name">{{ away.location || away.name || 'Away' }}</div>
               <div class="team-sub">
                 <span class="record">{{ recordLabel(away) }}</span>
-                <span class="abbr">{{ away.abbrev || 'AWAY' }}</span>
+                <!-- <span class="abbr">{{ away.abbrev || 'AWAY' }}</span> -->
               </div>
             </div>
             <div class="logo" :style="{ backgroundImage: `url('${away.logo || ''}')` }">
               <span v-if="!away.logo" class="logo-fallback">{{ away.abbrev || away.location || 'Away' }}</span>
             </div>
           </div>
+        </div>
+
+        <div v-if="venueLine" class="venue-line">
+          {{ venueLine }}
+          <span v-if="game.neutral_site" class="neutral-pill">Neutral</span>
         </div>
 
         <div class="players-grid" v-if="displayedPlayers.length">
@@ -398,9 +423,9 @@ onUnmounted(() => {
 }
 
 .time-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-family: 'Sora', sans-serif;
 }
 
@@ -413,6 +438,38 @@ onUnmounted(() => {
 .date {
   font-size: 0.9rem;
   color: var(--text-secondary);
+}
+
+.game-date-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.08rem 0.3rem;
+  border-radius: 7px;
+  border: 1px solid var(--border-glow);
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  margin-left: 0.2rem;
+}
+
+.game-date-badge .date-month {
+  color: var(--text-secondary);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.game-date-badge .date-day {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .conference-pill {
@@ -555,6 +612,23 @@ onUnmounted(() => {
   align-items: stretch;
 }
 
+.venue-line {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0.35rem 0 0 0.1rem;
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.neutral-pill {
+  border: 1px solid var(--border-glow);
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  color: var(--accent-cyan);
+  font-weight: 700;
+  font-size: 0.82rem;
+}
 .player-chip {
   cursor: pointer;
   border: 0;
