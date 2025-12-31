@@ -11,6 +11,7 @@ export const loadSharedFilters = () => {
       selectedPosition: typeof data.selectedPosition === 'string' ? data.selectedPosition : '',
       selectedConferences: Array.isArray(data.selectedConferences) ? data.selectedConferences : [],
       onlyWithPlayers: typeof data.onlyWithPlayers === 'boolean' ? data.onlyWithPlayers : null,
+      sortAsc: typeof data.sortAsc === 'boolean' ? data.sortAsc : null,
     }
   } catch {
     return {}
@@ -24,6 +25,7 @@ export const saveSharedFilters = (filters) => {
     selectedPosition: filters.selectedPosition || '',
     selectedConferences: Array.isArray(filters.selectedConferences) ? filters.selectedConferences : [],
     onlyWithPlayers: !!filters.onlyWithPlayers,
+    sortAsc: typeof filters.sortAsc === 'boolean' ? filters.sortAsc : true,
   }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))

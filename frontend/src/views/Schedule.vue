@@ -11,11 +11,12 @@ const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
 const { games, meta, loading, error, loadSchedule } = useScheduleData()
 const { conferences, loadConferences } = useConferences()
 
+const savedFilters = loadSharedFilters()
 const scheduleDate = ref('')
 const scheduleDates = ref([])
 const seasonPlayers = ref([])
 const classes = ['freshman', 'sophomore', 'junior', 'senior']
-const savedFilters = loadSharedFilters()
+const sortAsc = ref(typeof savedFilters.sortAsc === 'boolean' ? savedFilters.sortAsc : true)
 const selectedClasses = ref(
   Array.isArray(savedFilters.selectedClasses) && savedFilters.selectedClasses.length
     ? savedFilters.selectedClasses
@@ -52,7 +53,7 @@ const filteredGames = computed(() => {
     .sort((a, b) => {
       const t1 = a?.start_time ? new Date(a.start_time).getTime() : Number.POSITIVE_INFINITY
       const t2 = b?.start_time ? new Date(b.start_time).getTime() : Number.POSITIVE_INFINITY
-      return t1 - t2
+      return sortAsc.value ? t1 - t2 : t2 - t1
     })
 })
 
@@ -249,7 +250,7 @@ watch(scheduleDate, async (next, prev) => {
 })
 
 watch(
-  [selectedClasses, rsciOnly, selectedConferences, onlyWithPlayers],
+  [selectedClasses, rsciOnly, selectedConferences, onlyWithPlayers, sortAsc],
   () => {
     saveSharedFilters({
       selectedClasses: selectedClasses.value,
@@ -257,6 +258,7 @@ watch(
       selectedPosition: '',
       selectedConferences: selectedConferences.value,
       onlyWithPlayers: onlyWithPlayers.value,
+      sortAsc: sortAsc.value,
     })
   },
   { deep: true }
@@ -288,12 +290,20 @@ watch(
       </button>
     </div>
 
+    <div class="sort-toggle">
+      <span class="sort-label">Sort</span>
+      <div class="sort-buttons">
+        <button type="button" :class="{ active: sortAsc }" @click="sortAsc = true">Early</button>
+        <button type="button" :class="{ active: !sortAsc }" @click="sortAsc = false">Late</button>
+      </div>
+    </div>
+
     <div class="filter-toggle">
       <label class="toggle-switch">
         <input type="checkbox" v-model="onlyWithPlayers" />
         <span class="toggle-slider"></span>
       </label>
-      <span class="toggle-label">Only show games with filtered players</span>
+      <span class="toggle-label">Prospects only</span>
     </div>
 
     <div v-if="loading" class="loading">
@@ -395,6 +405,40 @@ watch(
 .date-pill-sub {
   color: var(--text-secondary);
   font-size: 0.85rem;
+}
+
+.sort-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.35rem 0 1.6rem 0;
+  color: var(--text-secondary);
+  margin-right: 1.2rem;
+}
+
+.sort-buttons {
+  display: inline-flex;
+  border: 1px solid var(--border-glow);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.sort-buttons button {
+  background: transparent;
+  border: none;
+  padding: 0.4rem 0.75rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.sort-buttons button.active {
+  color: var(--text-primary);
+  background: rgba(0, 212, 255, 0.12);
+}
+
+.sort-buttons button + button {
+  border-left: 1px solid var(--border-glow);
 }
 
 .page-title {
