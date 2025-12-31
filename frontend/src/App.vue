@@ -125,8 +125,6 @@ onMounted(() => {
   const stored = localStorage.getItem('toplines-theme')
   if (stored === 'light' || stored === 'dark') {
     theme.value = stored
-  } else if (window.matchMedia?.('(prefers-color-scheme: light)')?.matches) {
-    theme.value = 'light'
   }
   applyTheme(theme.value)
 

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, inject, onMounted, ref, watch } from 'vue'
+import { computed, inject, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import GameCard from '../components/GameCard.vue'
 import SettingsDrawer from '../components/SettingsDrawer.vue'
 import { useScheduleData } from '../composables/useScheduleData.js'
@@ -17,6 +17,13 @@ const scheduleDates = ref([])
 const seasonPlayers = ref([])
 const classes = ['freshman', 'sophomore', 'junior', 'senior']
 const sortAsc = ref(typeof savedFilters.sortAsc === 'boolean' ? savedFilters.sortAsc : true)
+const scheduleStatuses = ref(
+  Array.isArray(savedFilters.scheduleStatuses) && savedFilters.scheduleStatuses.length
+    ? savedFilters.scheduleStatuses
+    : ['upcoming', 'live', 'finished']
+)
+const nowTs = ref(Date.now())
+let nowTimer = null
 const selectedClasses = ref(
   Array.isArray(savedFilters.selectedClasses) && savedFilters.selectedClasses.length
     ? savedFilters.selectedClasses
@@ -33,6 +40,22 @@ const powerOrder = ['ACC', 'Big 12', 'Big Ten', 'SEC', 'Pac-12', 'Big East']
 const filteredGames = computed(() => {
   const isPower = (conf) => powerOrder.includes(conf)
   const confSet = new Set(selectedConferences.value || [])
+  const statusSet = new Set(scheduleStatuses.value || ['upcoming', 'live', 'finished'])
+
+  const statusFor = (game) => {
+    const raw = game?.start_time
+    let status = (game?.status || '').toLowerCase()
+    const start = raw ? new Date(raw).getTime() : NaN
+    if (status.includes('final') || status.includes('post')) return 'finished'
+    if (Number.isFinite(start)) {
+      const diff = nowTs.value - start
+      if (diff < 0) return 'upcoming'
+      if (diff <= 3 * 60 * 60 * 1000) return 'live'
+      return 'finished'
+    }
+    return 'upcoming'
+  }
+
   return [...games.value]
     .filter((game) => {
       const homeConf = game?.home?.conference
@@ -48,6 +71,8 @@ const filteredGames = computed(() => {
         const filteredPlayers = getFilteredPlayers(game)
         if (!filteredPlayers.length) return false
       }
+      const gStatus = statusFor(game)
+      if (statusSet.size && !statusSet.has(gStatus)) return false
       return true
     })
     .sort((a, b) => {
@@ -250,7 +275,7 @@ watch(scheduleDate, async (next, prev) => {
 })
 
 watch(
-  [selectedClasses, rsciOnly, selectedConferences, onlyWithPlayers, sortAsc],
+  [selectedClasses, rsciOnly, selectedConferences, onlyWithPlayers, sortAsc, scheduleStatuses],
   () => {
     saveSharedFilters({
       selectedClasses: selectedClasses.value,
@@ -259,10 +284,21 @@ watch(
       selectedConferences: selectedConferences.value,
       onlyWithPlayers: onlyWithPlayers.value,
       sortAsc: sortAsc.value,
+      scheduleStatuses: scheduleStatuses.value,
     })
   },
   { deep: true }
 )
+
+onMounted(() => {
+  nowTimer = setInterval(() => {
+    nowTs.value = Date.now()
+  }, 60000)
+})
+
+onBeforeUnmount(() => {
+  if (nowTimer) clearInterval(nowTimer)
+})
 </script>
 
 <template>
@@ -298,12 +334,27 @@ watch(
       </div>
     </div>
 
+    <div class="status-toggle">
+      <span class="sort-label">Status</span>
+      <div class="status-buttons">
+        <button
+          v-for="opt in ['upcoming', 'live', 'finished']"
+          :key="opt"
+          type="button"
+          :class="{ active: scheduleStatuses.includes(opt) }"
+          @click="scheduleStatuses = scheduleStatuses.includes(opt) ? scheduleStatuses.filter(s => s !== opt) : [...scheduleStatuses, opt]"
+        >
+          {{ opt === 'upcoming' ? 'Not Started' : opt === 'live' ? 'In Progress' : 'Ended' }}
+        </button>
+      </div>
+    </div>
+
     <div class="filter-toggle">
+      <span class="toggle-label">Prospects only</span>
       <label class="toggle-switch">
         <input type="checkbox" v-model="onlyWithPlayers" />
         <span class="toggle-slider"></span>
       </label>
-      <span class="toggle-label">Prospects only</span>
     </div>
 
     <div v-if="loading" class="loading">
@@ -441,6 +492,37 @@ watch(
   border-left: 1px solid var(--border-glow);
 }
 
+.status-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+}
+
+.status-buttons {
+  display: inline-flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.status-buttons button {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glow);
+  color: var(--text-secondary);
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.status-buttons button.active {
+  background: rgba(0, 212, 255, 0.14);
+  color: var(--text-primary);
+  border-color: rgba(0, 212, 255, 0.5);
+}
+
 .page-title {
   font-family: 'Sora', sans-serif;
   font-size: 2rem;
@@ -489,7 +571,8 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  margin: 0.5rem 0 1rem 0;
+  margin: .5rem 0 1rem 0;
+  margin-left: 1.0rem;
 }
 
 .toggle-switch {
@@ -541,8 +624,8 @@ watch(
 }
 
 .toggle-label {
-  color: var(--text-primary);
-  font-weight: 700;
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 .chip {
