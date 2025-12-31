@@ -85,6 +85,11 @@ const rankedPlayers = computed(() => (
   }))
 ))
 
+const endDate = computed(() => {
+  if (!meta.value) return ''
+  return formatDateDisplay(meta.value.end_date)
+})
+
 // Compute subtitle based on meta
 const dateRangeText = computed(() => {
   if (!meta.value) return ''
@@ -198,10 +203,9 @@ onBeforeRouteLeave(() => {
     />
 
       <div class="page-header">
-        <h1 class="page-title">Season Rankings</h1>
+        <h1 class="page-title">Prospect Rankings</h1>
         <p class="page-subtitle">
-          Cumulative prospect rankings based on full season performance
-          <span v-if="dateRangeText">({{ dateRangeText }})</span>
+          Season rankings last updated on <span v-if="endDate">{{ endDate }}</span>.
         </p>
       </div>
     </div>

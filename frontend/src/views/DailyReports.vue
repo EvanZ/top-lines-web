@@ -318,9 +318,8 @@ onBeforeRouteLeave(() => {
     />
 
       <div class="page-header">
-        <h1 class="page-title">Daily Reports</h1>
+        <h1 class="page-title">Noteworthy Performances</h1>
         <p class="page-subtitle">
-          Top performances 
           <span v-if="dateRangeText">from {{ dateRangeText }}.</span>
           <span>&nbsp;Click to flip cards between daily and season performance.</span>
         </p>
@@ -682,6 +681,7 @@ onBeforeRouteLeave(() => {
   font-size: 0.875rem;
   margin-top: 1rem;
 }
+
 
 @media (max-width: 768px) {
   .page-header-row {
