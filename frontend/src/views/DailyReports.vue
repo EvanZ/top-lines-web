@@ -24,6 +24,8 @@ const selectedConferences = ref([])
 const flippedCards = ref(new Set())
 const flipAnimating = ref(new Set())
 let flipTimer = null
+const shakeCards = ref(new Set())
+const shakeTimers = new Map()
 const selectedPosition = ref('')
 const availableDate = ref('2025-12-23') // Latest available date
 const availableRankingsDate = ref('2025-12-23')
@@ -191,6 +193,22 @@ function toggleCardFlip(player, event) {
     return
   }
   const key = playerKey(player)
+  if (!seasonPlayerFor(player.player_id)) {
+    const nextShake = new Set(shakeCards.value)
+    nextShake.add(key)
+    shakeCards.value = nextShake
+    if (shakeTimers.has(key)) {
+      clearTimeout(shakeTimers.get(key))
+    }
+    const timer = setTimeout(() => {
+      const updated = new Set(shakeCards.value)
+      updated.delete(key)
+      shakeCards.value = updated
+      shakeTimers.delete(key)
+    }, 650)
+    shakeTimers.set(key, timer)
+    return
+  }
   const nextAnim = new Set(flipAnimating.value)
   nextAnim.add(key)
   flipAnimating.value = nextAnim
@@ -324,7 +342,13 @@ onBeforeRouteLeave(() => {
         v-for="player in rankedPlayers"
         :key="player.player_id + '-' + player.game_id"
         class="compare-card"
-        :class="{ 'is-selected': isSelected(player), 'is-compare': compareEnabled, flipped: flippedCards.has(playerKey(player)), 'flip-anim': flipAnimating.has(playerKey(player)) }"
+        :class="{
+          'is-selected': isSelected(player),
+          'is-compare': compareEnabled,
+          flipped: flippedCards.has(playerKey(player)),
+          'flip-anim': flipAnimating.has(playerKey(player)),
+          shaking: shakeCards.has(playerKey(player))
+        }"
         @click="toggleCardFlip(player, $event)"
       >
         <button
@@ -354,7 +378,7 @@ onBeforeRouteLeave(() => {
                 :player="seasonPlayerFor(player.player_id)"
                 :gender="gender"
               />
-              <div v-else class="season-modal-empty">Season card unavailable.</div>
+              <div v-else class="season-modal-empty">Unavailable</div>
             </div>
           </div>
         </div>
@@ -429,6 +453,10 @@ onBeforeRouteLeave(() => {
 .compare-card.is-selected {
   animation: compare-bounce 1s ease-in-out infinite;
   will-change: transform;
+}
+
+.compare-card.shaking {
+  animation: headshake 0.45s ease;
 }
 
 .compare-toggle {
@@ -563,6 +591,27 @@ onBeforeRouteLeave(() => {
   }
   100% {
     transform: scale(1);
+  }
+}
+
+@keyframes headshake {
+  0% {
+    transform: translateX(0) rotate(0deg);
+  }
+  20% {
+    transform: translateX(-6px) rotate(-1.5deg);
+  }
+  40% {
+    transform: translateX(6px) rotate(1.5deg);
+  }
+  60% {
+    transform: translateX(-4px) rotate(-1deg);
+  }
+  80% {
+    transform: translateX(4px) rotate(1deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
   }
 }
 
