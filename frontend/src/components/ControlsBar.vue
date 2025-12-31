@@ -9,6 +9,14 @@ const props = defineProps({
   selectedPosition: String,
   showDateRange: Boolean,
   showCompare: Boolean,
+  showRsci: {
+    type: Boolean,
+    default: true
+  },
+  showPosition: {
+    type: Boolean,
+    default: true
+  },
   disableControls: Boolean,
   gender: {
     type: String,
@@ -119,80 +127,6 @@ watch(controlsDisabled, (value) => {
       </div>
     </div>
 
-    <!-- Date Range (Daily Reports only) -->
-    <div v-if="showDateRange" class="control-group">
-      <span class="control-label">Date Range</span>
-      <div class="date-buttons">
-        <button 
-          v-for="d in dateRanges" 
-          :key="d"
-          class="date-btn"
-          :class="{ active: dateRange === d }"
-          :disabled="controlsDisabled"
-          @click="emit('update:dateRange', d)"
-        >
-          {{ d }}d
-        </button>
-      </div>
-    </div>
-
-    <!-- RSCI Toggle -->
-    <div class="control-group toggle-group">
-      <label class="toggle-switch">
-        <input 
-          type="checkbox" 
-          :checked="rsciOnly"
-          :disabled="controlsDisabled"
-          @change="emit('update:rsciOnly', $event.target.checked)"
-        >
-        <span class="toggle-slider"></span>
-      </label>
-      <span class="toggle-label" :class="{ active: rsciOnly }">
-        <span class="rsci-icon">★</span> {{ rsciLabel }} Only
-      </span>
-    </div>
-
-    <!-- Compare Toggle -->
-    <div
-      v-if="showCompare"
-      class="control-group toggle-group compare-toggle"
-    >
-      <label class="toggle-switch">
-        <input
-          type="checkbox"
-          :checked="compareEnabled"
-          @change="emit('update:compareEnabled', $event.target.checked)"
-        >
-        <span class="toggle-slider"></span>
-      </label>
-      <span class="toggle-label" :class="{ active: compareEnabled }">
-        Compare
-        <span class="compare-tooltip" tabindex="0" aria-label="Compare mode help">
-          i
-          <span class="compare-tooltip-text">
-            Select cards by clicking them first, then enable Compare to isolate them.
-          </span>
-        </span>
-      </span>
-    </div>
-
-    <!-- Position Filter -->
-    <div class="control-group">
-      <span class="control-label">Position</span>
-      <div class="position-buttons">
-        <button 
-          v-for="pos in positions" 
-          :key="pos.label"
-          class="position-btn"
-          :class="{ active: (selectedPosition || '') === pos.value }"
-          :disabled="controlsDisabled"
-          @click="emit('update:selectedPosition', pos.value)"
-        >
-          {{ pos.label }}
-        </button>
-      </div>
-    </div>
-
     <!-- Conference Filter -->
     <div class="control-group">
       <span class="control-label">Conference</span>
@@ -233,6 +167,81 @@ watch(controlsDisabled, (value) => {
         </div>
       </div>
     </div>
+
+    <!-- Date Range (Daily Reports only) -->
+    <div v-if="showDateRange" class="control-group">
+      <span class="control-label">Date Range</span>
+      <div class="date-buttons">
+        <button 
+          v-for="d in dateRanges" 
+          :key="d"
+          class="date-btn"
+          :class="{ active: dateRange === d }"
+          :disabled="controlsDisabled"
+          @click="emit('update:dateRange', d)"
+        >
+          {{ d }}d
+        </button>
+      </div>
+    </div>
+
+    <!-- RSCI Toggle -->
+    <div v-if="showRsci" class="control-group toggle-group">
+      <label class="toggle-switch">
+        <input 
+          type="checkbox" 
+          :checked="rsciOnly"
+          :disabled="controlsDisabled"
+          @change="emit('update:rsciOnly', $event.target.checked)"
+        >
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="toggle-label" :class="{ active: rsciOnly }">
+        <span class="rsci-icon">★</span> {{ rsciLabel }} Only
+      </span>
+    </div>
+
+    <!-- Compare Toggle -->
+    <div
+      v-if="showCompare"
+      class="control-group toggle-group compare-toggle"
+    >
+      <label class="toggle-switch">
+        <input
+          type="checkbox"
+          :checked="compareEnabled"
+          @change="emit('update:compareEnabled', $event.target.checked)"
+        >
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="toggle-label" :class="{ active: compareEnabled }">
+        Compare
+        <span class="compare-tooltip" tabindex="0" aria-label="Compare mode help">
+          i
+          <span class="compare-tooltip-text">
+            Select cards by clicking them first, then enable Compare to isolate them.
+          </span>
+        </span>
+      </span>
+    </div>
+
+    <!-- Position Filter -->
+    <div v-if="showPosition" class="control-group">
+      <span class="control-label">Position</span>
+      <div class="position-buttons">
+        <button 
+          v-for="pos in positions" 
+          :key="pos.label"
+          class="position-btn"
+          :class="{ active: (selectedPosition || '') === pos.value }"
+          :disabled="controlsDisabled"
+          @click="emit('update:selectedPosition', pos.value)"
+        >
+          {{ pos.label }}
+        </button>
+      </div>
+    </div>
+
   </div>
 </template>
 

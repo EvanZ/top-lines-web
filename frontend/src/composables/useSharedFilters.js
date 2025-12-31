@@ -9,7 +9,8 @@ export const loadSharedFilters = () => {
       selectedClasses: Array.isArray(data.selectedClasses) ? data.selectedClasses : null,
       rsciOnly: typeof data.rsciOnly === 'boolean' ? data.rsciOnly : null,
       selectedPosition: typeof data.selectedPosition === 'string' ? data.selectedPosition : '',
-      selectedConferences: Array.isArray(data.selectedConferences) ? data.selectedConferences : []
+      selectedConferences: Array.isArray(data.selectedConferences) ? data.selectedConferences : [],
+      onlyWithPlayers: typeof data.onlyWithPlayers === 'boolean' ? data.onlyWithPlayers : null,
     }
   } catch {
     return {}
@@ -21,7 +22,8 @@ export const saveSharedFilters = (filters) => {
     selectedClasses: Array.isArray(filters.selectedClasses) ? filters.selectedClasses : [],
     rsciOnly: !!filters.rsciOnly,
     selectedPosition: filters.selectedPosition || '',
-    selectedConferences: Array.isArray(filters.selectedConferences) ? filters.selectedConferences : []
+    selectedConferences: Array.isArray(filters.selectedConferences) ? filters.selectedConferences : [],
+    onlyWithPlayers: !!filters.onlyWithPlayers,
   }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))

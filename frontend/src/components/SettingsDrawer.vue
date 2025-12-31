@@ -48,6 +48,18 @@ defineProps({
     type: Boolean,
     default: false
   },
+  showClass: {
+    type: Boolean,
+    default: true
+  },
+  showRsci: {
+    type: Boolean,
+    default: true
+  },
+  showPosition: {
+    type: Boolean,
+    default: true
+  },
   disableControls: {
     type: Boolean,
     default: false
@@ -151,7 +163,7 @@ const closeDrawer = () => {
           </button>
         </div>
 
-        <div class="settings-section">
+        <div v-if="showClass" class="settings-section">
           <div class="settings-label">Class</div>
           <ClassTabs
             :classes="classes"
@@ -171,6 +183,8 @@ const closeDrawer = () => {
           :conferences="conferences"
           :showDateRange="showDateRange"
           :showCompare="showCompare"
+          :showRsci="showRsci"
+          :showPosition="showPosition"
           :disableControls="disableControls"
           @update:gender="emit('update:gender', $event)"
           @update:dateRange="emit('update:dateRange', $event)"

@@ -133,9 +133,16 @@ const seasonRankMap = computed(() => {
   return map
 })
 
-const seasonPlayersById = computed(() => new Map(
-  seasonPlayers.value.map(player => [player.player_id, player])
-))
+const seasonPlayersById = computed(() => {
+  const rankMap = seasonRankMap.value
+  return new Map(
+    seasonPlayers.value.map(player => {
+      const pid = player.player_id
+      const display_rank = rankMap.get(pid) ?? player.display_rank ?? player.class_rank
+      return [pid, { ...player, display_rank }]
+    })
+  )
+})
 
 const seasonPlayerFor = (playerId) => seasonPlayersById.value.get(playerId)
 
@@ -314,6 +321,9 @@ onBeforeRouteLeave(() => {
       :conferences="conferences"
       :disableControls="compareEnabled"
       showDateRange
+      :showClass="true"
+      :showRsci="true"
+      :showPosition="true"
       subtitle="Slice daily reports"
     />
 

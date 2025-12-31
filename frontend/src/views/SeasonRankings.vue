@@ -199,6 +199,9 @@ onBeforeRouteLeave(() => {
       :classes="classes"
       :conferences="conferences"
       :disableControls="compareEnabled"
+      :showClass="true"
+      :showRsci="true"
+      :showPosition="true"
       subtitle="Tune the rankings view"
     />
 
