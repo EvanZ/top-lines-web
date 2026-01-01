@@ -1,9 +1,9 @@
 <script setup>
-import { ref, inject } from 'vue'
+import { ref, inject, computed } from 'vue'
 import ControlsBar from './ControlsBar.vue'
 import ClassTabs from './ClassTabs.vue'
 
-defineProps({
+const props = defineProps({
   classes: {
     type: Array,
     default: () => []
@@ -80,8 +80,21 @@ const emit = defineEmits([
   'update:dateRange'
 ])
 
+const activeGender = computed(() => props.gender || 'men')
+const rsciLabel = computed(() => activeGender.value === 'women' ? 'HoopGurlz' : 'RSCI')
+
 const theme = inject('theme', ref('dark'))
 const toggleTheme = inject('toggleTheme', () => {})
+
+const setGender = (value) => {
+  if (props.disableControls) return
+  emit('update:gender', value)
+}
+
+const toggleRsci = (event) => {
+  if (props.disableControls) return
+  emit('update:rsciOnly', event.target.checked)
+}
 
 const open = ref(false)
 const openDrawer = () => {
@@ -124,43 +137,83 @@ const closeDrawer = () => {
         </div>
 
         <div class="settings-section settings-theme">
-          <div class="settings-label">Theme</div>
-          <button
-            type="button"
-            class="theme-toggle"
-            :class="{ 'is-light': theme === 'light' }"
-            :aria-pressed="theme === 'light'"
-            :aria-label="`Switch to ${theme === 'light' ? 'night' : 'day'} mode`"
-            @click="toggleTheme"
-          >
-            <span class="theme-label" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="presentation" focusable="false">
-                <path
-                  d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </span>
-            <span class="theme-track">
-              <span class="theme-thumb"></span>
-            </span>
-            <span class="theme-label" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="presentation" focusable="false">
-                <path
-                  d="M12 6.75v-2m0 14.5v-2m7.25-5.25h-2m-10.5 0h-2m12.2-5.95-1.4 1.4m-9.2 9.2-1.4 1.4m12 9.2-1.4-1.4m-9.2-9.2-1.4-1.4M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </span>
-          </button>
+          <div class="settings-label">Quick Toggles</div>
+          <div class="settings-toggle-row">
+            <div class="quick-toggle theme-toggle-block">
+              <button
+                type="button"
+                class="theme-toggle"
+                :class="{ 'is-light': theme === 'light' }"
+                :aria-pressed="theme === 'light'"
+                :aria-label="`Switch to ${theme === 'light' ? 'night' : 'day'} mode`"
+                @click="toggleTheme"
+              >
+                <span class="theme-label" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+                    <path
+                      d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span class="theme-track">
+                  <span class="theme-thumb"></span>
+                </span>
+                <span class="theme-label" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+                    <path
+                      d="M12 6.75v-2m0 14.5v-2m7.25-5.25h-2m-10.5 0h-2m12.2-5.95-1.4 1.4m-9.2 9.2-1.4 1.4m12 9.2-1.4-1.4m-9.2-9.2-1.4-1.4M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+              </button>
+            </div>
+
+            <div class="quick-toggle gender-toggle-block">
+              <div class="gender-buttons">
+                <button
+                  class="gender-btn"
+                  :class="{ active: activeGender === 'men' }"
+                  :disabled="disableControls"
+                  @click="setGender('men')"
+                >
+                  Men
+                </button>
+                <button
+                  class="gender-btn"
+                  :class="{ active: activeGender === 'women' }"
+                  :disabled="disableControls"
+                  @click="setGender('women')"
+                >
+                  Women
+                </button>
+              </div>
+            </div>
+
+            <div v-if="showRsci" class="quick-toggle rsci-toggle-block">
+              <span class="toggle-label" :class="{ active: rsciOnly }">
+                <span class="rsci-icon">★</span> {{ rsciLabel }}
+              </span>
+              <label class="toggle-switch">
+                <input
+                  type="checkbox"
+                  :checked="rsciOnly"
+                  :disabled="disableControls"
+                  @change="toggleRsci"
+                >
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
         </div>
 
         <div v-if="showClass" class="settings-section">
@@ -174,21 +227,16 @@ const closeDrawer = () => {
         </div>
 
         <ControlsBar
-          :gender="gender"
           :dateRange="dateRange"
-          :rsciOnly="rsciOnly"
           :compareEnabled="compareEnabled"
           :selectedConferences="selectedConferences"
           :selectedPosition="selectedPosition"
           :conferences="conferences"
           :showDateRange="showDateRange"
           :showCompare="showCompare"
-          :showRsci="showRsci"
           :showPosition="showPosition"
           :disableControls="disableControls"
-          @update:gender="emit('update:gender', $event)"
           @update:dateRange="emit('update:dateRange', $event)"
-          @update:rsciOnly="emit('update:rsciOnly', $event)"
           @update:compareEnabled="emit('update:compareEnabled', $event)"
           @update:selectedConferences="emit('update:selectedConferences', $event)"
           @update:selectedPosition="emit('update:selectedPosition', $event)"
@@ -322,9 +370,9 @@ const closeDrawer = () => {
 
 .settings-theme {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
 
 .settings-theme .settings-label {
@@ -338,6 +386,133 @@ const closeDrawer = () => {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 0.5rem;
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.quick-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-label {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.gender-buttons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.gender-btn {
+  padding: 0.375rem 0.75rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-glow);
+  color: var(--text-secondary);
+  font-family: 'Sora', sans-serif;
+  font-size: 0.75rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.gender-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+
+.gender-btn.active {
+  background: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  color: var(--bg-dark);
+}
+
+.gender-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rsci-toggle-block {
+  gap: 0.35rem;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-glow);
+  border-radius: 24px;
+  transition: all 0.3s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: var(--accent-gold);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background: var(--accent-gold);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.toggle-switch input:disabled + .toggle-slider {
+  opacity: 0.6;
+}
+
+.toggle-label {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.toggle-label.active {
+  color: var(--accent-gold);
+}
+
+.rsci-icon {
+  color: var(--accent-gold);
 }
 
 .theme-toggle {
@@ -448,8 +623,7 @@ const closeDrawer = () => {
 }
 
 .settings-panel :deep(.date-buttons),
-.settings-panel :deep(.position-buttons),
-.settings-panel :deep(.gender-buttons) {
+.settings-panel :deep(.position-buttons) {
   justify-content: flex-end;
   flex-wrap: wrap;
 }
@@ -462,6 +636,8 @@ const closeDrawer = () => {
   width: 100%;
   justify-content: space-between;
 }
+
+/* In the drawer we want the conference list to open upward to stay in view */
 
 @media (max-width: 768px) {
   .settings-fab {

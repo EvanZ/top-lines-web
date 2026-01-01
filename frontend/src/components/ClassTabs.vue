@@ -16,7 +16,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selectedClasses'])
 
-const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1)
+const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1,2).toLowerCase()
 
 const toggleClass = (cls) => {
   if (props.disabled) return

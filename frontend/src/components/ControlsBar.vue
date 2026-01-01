@@ -3,25 +3,16 @@ import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   dateRange: Number,
-  rsciOnly: Boolean,
   compareEnabled: Boolean,
   selectedConferences: Array,
   selectedPosition: String,
   showDateRange: Boolean,
   showCompare: Boolean,
-  showRsci: {
-    type: Boolean,
-    default: true
-  },
   showPosition: {
     type: Boolean,
     default: true
   },
   disableControls: Boolean,
-  gender: {
-    type: String,
-    default: 'men'
-  },
   conferences: {
     type: Array,
     default: () => []
@@ -30,11 +21,9 @@ const props = defineProps({
 
 const emit = defineEmits([
   'update:dateRange', 
-  'update:rsciOnly', 
   'update:compareEnabled',
   'update:selectedConferences',
-  'update:selectedPosition',
-  'update:gender'
+  'update:selectedPosition'
 ])
 
 const positions = [
@@ -46,8 +35,6 @@ const positions = [
 
 const dateRanges = [1, 2, 3, 7]
 const showDropdown = ref(false)
-const activeGender = computed(() => props.gender || 'men')
-const rsciLabel = computed(() => activeGender.value === 'women' ? 'HoopGurlz' : 'RSCI')
 const controlsDisabled = computed(() => !!props.disableControls)
 
 // Group conferences into power and others
@@ -90,11 +77,6 @@ function clearFilters() {
   emit('update:selectedConferences', [])
 }
 
-function setGender(value) {
-  if (controlsDisabled.value) return
-  emit('update:gender', value)
-}
-
 watch(controlsDisabled, (value) => {
   if (value) {
     showDropdown.value = false
@@ -104,29 +86,6 @@ watch(controlsDisabled, (value) => {
 
 <template>
   <div class="controls-bar" :class="{ locked: controlsDisabled }">
-    <!-- Gender Toggle -->
-    <div class="control-group">
-      <span class="control-label">Gender</span>
-      <div class="gender-buttons">
-        <button
-          class="gender-btn"
-          :class="{ active: activeGender === 'men' }"
-          :disabled="controlsDisabled"
-          @click="setGender('men')"
-        >
-          M
-        </button>
-        <button
-          class="gender-btn"
-          :class="{ active: activeGender === 'women' }"
-          :disabled="controlsDisabled"
-          @click="setGender('women')"
-        >
-          W
-        </button>
-      </div>
-    </div>
-
     <!-- Conference Filter -->
     <div class="control-group">
       <span class="control-label">Conference</span>
@@ -183,22 +142,6 @@ watch(controlsDisabled, (value) => {
           {{ d }}d
         </button>
       </div>
-    </div>
-
-    <!-- RSCI Toggle -->
-    <div v-if="showRsci" class="control-group toggle-group">
-      <label class="toggle-switch">
-        <input 
-          type="checkbox" 
-          :checked="rsciOnly"
-          :disabled="controlsDisabled"
-          @change="emit('update:rsciOnly', $event.target.checked)"
-        >
-        <span class="toggle-slider"></span>
-      </label>
-      <span class="toggle-label" :class="{ active: rsciOnly }">
-        <span class="rsci-icon">★</span> {{ rsciLabel }} Only
-      </span>
     </div>
 
     <!-- Compare Toggle -->
@@ -336,15 +279,13 @@ watch(controlsDisabled, (value) => {
 }
 
 .date-buttons,
-.position-buttons,
-.gender-buttons {
+.position-buttons {
   display: flex;
   gap: 0.25rem;
 }
 
 .date-btn,
-.position-btn,
-.gender-btn {
+.position-btn {
   padding: 0.375rem 0.75rem;
   background: var(--bg-dark);
   border: 1px solid var(--border-glow);
@@ -357,15 +298,13 @@ watch(controlsDisabled, (value) => {
 }
 
 .date-btn:hover,
-.position-btn:hover,
-.gender-btn:hover {
+.position-btn:hover {
   border-color: var(--accent-cyan);
   color: var(--text-primary);
 }
 
 .date-btn.active,
-.position-btn.active,
-.gender-btn.active {
+.position-btn.active {
   background: var(--accent-cyan);
   border-color: var(--accent-cyan);
   color: var(--bg-dark);
@@ -432,10 +371,6 @@ watch(controlsDisabled, (value) => {
 }
 
 .toggle-label.active {
-  color: var(--accent-gold);
-}
-
-.rsci-icon {
   color: var(--accent-gold);
 }
 
