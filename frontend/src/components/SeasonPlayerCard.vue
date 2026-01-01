@@ -228,12 +228,12 @@
         </thead>
         <tbody>
           <tr>
-            <td :class="pct(p.spgpctile)">{{ p.spg?.toFixed(1) }}</td>
-            <td :class="pct(p.bpgpctile)">{{ p.bpg?.toFixed(1) }}</td>
-            <td :class="pct(p.rpgpctile)">{{ (p.orb / gp)?.toFixed(1) }}</td>
-            <td :class="pct(p.rpgpctile)">{{ ((p.orb / p.minutes) * 40)?.toFixed(1) }}</td>
-            <td :class="pct(p.rpgpctile)">{{ (p.drb / gp)?.toFixed(1) }}</td>
-            <td :class="pct(p.rpgpctile)">{{ ((p.drb / p.minutes) * 40)?.toFixed(1) }}</td>
+            <td :class="pct(p.defense?.stl100pctile)">{{ fmt(p.defense?.stl100, 1) }}</td>
+            <td :class="pct(p.defense?.blkpctpctile)">{{ fmt(p.defense?.blkpct, 1) }}%</td>
+            <td :class="pct(p.rebounding?.orb100pctile)">{{ fmt(p.rebounding?.orb100, 1) }}</td>
+            <td :class="pct(p.rebounding?.orbpctpctile)">{{ fmt(p.rebounding?.orbpct, 1) }}%</td>
+            <td :class="pct(p.rebounding?.drb100pctile)">{{ fmt(p.rebounding?.drb100, 1) }}</td>
+            <td :class="pct(p.rebounding?.drbpctpctile)">{{ fmt(p.rebounding?.drbpct, 1) }}%</td>
           </tr>
         </tbody>
       </table>
