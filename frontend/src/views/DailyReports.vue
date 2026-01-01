@@ -30,6 +30,7 @@ const selectedPosition = ref('')
 const availableDate = ref('2025-12-23') // Latest available date
 const availableRankingsDate = ref('2025-12-23')
 const seasonPlayers = ref([])
+const hideUnranked = ref(false)
 
 const classes = ['freshman', 'sophomore', 'junior', 'senior']
 const savedFilters = loadSharedFilters()
@@ -155,8 +156,14 @@ const filteredPlayers = computed(() => {
   return base.filter(player => selected.has(playerKey(player)))
 })
 
+const visiblePlayers = computed(() => {
+  if (!hideUnranked.value) return filteredPlayers.value
+  const rankedIds = seasonRankMap.value
+  return filteredPlayers.value.filter(player => rankedIds.has(player.player_id))
+})
+
 const rankedPlayers = computed(() => (
-  filteredPlayers.value.map((player, idx) => ({
+  visiblePlayers.value.map((player, idx) => ({
     ...player,
     display_rank: idx + 1,
     season_rank: seasonRankMap.value.get(player.player_id) ?? null
@@ -306,7 +313,9 @@ onBeforeRouteLeave(() => {
 
 <template>
   <div class="daily-reports">
-    <CompareToggle v-model="compareEnabled" />
+    <div class="top-controls">
+      <CompareToggle v-model="compareEnabled" />
+    </div>
 
     <div class="page-header-row">
       <SettingsDrawer
@@ -334,6 +343,20 @@ onBeforeRouteLeave(() => {
           <span>&nbsp;Click to flip cards between daily and season performance.</span>
         </p>
       </div>
+      <div class="inline-toggle">
+        <label class="toggle-switch">
+          <input
+            type="checkbox"
+            :checked="hideUnranked"
+            @change="hideUnranked = $event.target.checked"
+          >
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label" :class="{ active: hideUnranked }">
+          Hide unranked
+        </span>
+      </div>
+
     </div>
 
     <div v-if="loading" class="loading">
@@ -400,7 +423,7 @@ onBeforeRouteLeave(() => {
     </div>
     
     <div v-if="!loading && players.length > 0" class="results-count">
-      Showing {{ filteredPlayers.length }} of {{ players.length }} total players
+      Showing {{ visiblePlayers.length }} of {{ players.length }} total players
     </div>
 
   </div>
@@ -409,6 +432,78 @@ onBeforeRouteLeave(() => {
 <style scoped>
 .daily-reports {
   padding: 1rem;
+}
+
+.top-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.inline-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-family: 'Sora', sans-serif;
+  font-size: 0.9rem;
+}
+
+.inline-toggle .toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+}
+
+.inline-toggle .toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.inline-toggle .toggle-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-glow);
+  border-radius: 24px;
+  transition: all 0.3s ease;
+}
+
+.inline-toggle .toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.inline-toggle input:checked + .toggle-slider {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: var(--accent-gold);
+}
+
+.inline-toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background: var(--accent-gold);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.inline-toggle .toggle-label {
+  transition: color 0.2s ease;
+}
+
+.inline-toggle .toggle-label.active {
+  color: var(--accent-cyan);
 }
 
 .page-header-row {
