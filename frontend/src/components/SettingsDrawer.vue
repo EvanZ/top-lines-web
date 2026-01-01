@@ -632,9 +632,8 @@ const closeDrawer = () => {
   width: 100%;
 }
 
-.settings-panel :deep(.multiselect-btn) {
+.settings-panel :deep(.multiselect__tags) {
   width: 100%;
-  justify-content: space-between;
 }
 
 /* In the drawer we want the conference list to open upward to stay in view */
