@@ -132,12 +132,12 @@ const seasonGlossary = {
     { label: 'ATR', formula: 'AST / TOV' }
   ],
   defense: [
-    { label: 'ST%', formula: 'STL / GP' },
-    { label: 'BK%', formula: 'BLK / GP' },
-    { label: 'ORR', formula: 'ORB / GP' },
-    { label: 'OR%', formula: '(ORB / minutes) * 40' },
-    { label: 'DRR', formula: 'DRB / GP' },
-    { label: 'DR%', formula: '(DRB / minutes) * 40' }
+    { label: 'ST%', formula: 'round(cast(100.0 * stl * team_minutes / (minutes * team_poss) as numeric),1)' },
+    { label: 'BK%', formula: 'round(cast(100.0 * blk * team_minutes / (minutes*(opp_fga-opp_fg3a)) as numeric),1)' },
+    { label: 'ORR', formula: 'round(cast(100.0 * orb * team_minutes / (minutes * team_poss) as numeric),1)' },
+    { label: 'OR%', formula: 'round(cast(100.0 * orb * team_minutes / (minutes * (team_orb+opp_drb)) as numeric),1)' },
+    { label: 'DRR', formula: 'round(cast(100.0 * drb * team_minutes / (minutes * team_poss) as numeric),1)' },
+    { label: 'DR%', formula: 'round(cast(100.0 * drb * team_minutes / (minutes * (team_drb+opp_orb)) as numeric),1)' }
   ],
   assistDist: [
     { label: 'DNK AST', formula: 'Assists leading to dunk makes' },
