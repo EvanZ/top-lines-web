@@ -1,5 +1,7 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
+import Multiselect from 'vue-multiselect'
+import 'vue-multiselect/dist/vue-multiselect.css'
 
 const props = defineProps({
   dateRange: Number,
@@ -34,97 +36,119 @@ const positions = [
 ]
 
 const dateRanges = [1, 2, 3, 7]
-const showDropdown = ref(false)
 const controlsDisabled = computed(() => !!props.disableControls)
 
-// Group conferences into power and others
-// Note: team_conf in player data uses short names like "ACC", "Big Ten"
-const groupedConferences = computed(() => {
+// Build grouped options for vue-multiselect
+const conferenceOptions = computed(() => {
   const powerConfs = ['ACC', 'Big 12', 'Big East', 'Big Ten', 'SEC']
   const power = []
   const other = []
   
   props.conferences.forEach(conf => {
-    // Use short_name for filtering (matches team_conf in player data)
     const shortName = conf.short_name || conf.name
+    if (!shortName || shortName === 'Division I') return
+    const option = { label: shortName, value: shortName }
     if (powerConfs.includes(shortName)) {
-      power.push(shortName)
-    } else if (shortName !== 'Division I') {
-      other.push(shortName)
+      power.push(option)
+    } else {
+      other.push(option)
     }
   })
   
+  const sortByLabel = (a, b) => a.label.localeCompare(b.label)
   return [
-    { group: 'Power Conferences', items: power.sort() },
-    { group: 'Other Conferences', items: other.sort() }
+    { group: 'Power Conferences', items: power.sort(sortByLabel) },
+    { group: 'Other Conferences', items: other.sort(sortByLabel) }
   ]
 })
 
-function toggleConference(conf) {
-  if (controlsDisabled.value) return
-  const current = props.selectedConferences || []
-  let updated
-  if (current.includes(conf)) {
-    updated = current.filter(c => c !== conf)
-  } else {
-    updated = [...current, conf]
-  }
-  emit('update:selectedConferences', updated)
-}
-
-function clearFilters() {
-  if (controlsDisabled.value) return
-  emit('update:selectedConferences', [])
-}
-
-watch(controlsDisabled, (value) => {
-  if (value) {
-    showDropdown.value = false
+// Map selected string values to option objects for the multiselect
+const selectedConferenceOptions = computed({
+  get() {
+    const selected = new Set(props.selectedConferences || [])
+    return conferenceOptions.value.flatMap(group =>
+      group.items.filter(opt => selected.has(opt.value))
+    )
+  },
+  set(options) {
+    if (controlsDisabled.value) return
+    const values = (options || []).map(opt => opt.value)
+    emit('update:selectedConferences', values)
   }
 })
+
+const clearConferenceSelections = () => {
+  if (controlsDisabled.value) return
+  selectedConferenceOptions.value = []
+}
+
 </script>
 
 <template>
   <div class="controls-bar" :class="{ locked: controlsDisabled }">
     <!-- Conference Filter -->
-    <div class="control-group">
+    <div class="control-group conference-group">
       <span class="control-label">Conference</span>
-      <div class="multiselect">
-        <button class="multiselect-btn" :disabled="controlsDisabled" @click="showDropdown = !showDropdown">
-          <span class="label">
-            {{ selectedConferences?.length === 0 ? 'All Conferences' : 
-               selectedConferences?.length + ' selected' }}
-          </span>
-          <span class="arrow">▼</span>
-        </button>
-        <div v-if="showDropdown && !controlsDisabled" class="multiselect-dropdown">
-          <button 
-            v-if="selectedConferences?.length > 0" 
-            class="clear-btn" 
-            :disabled="controlsDisabled"
-            @click="clearFilters"
-          >
-            Clear All
-          </button>
-          <div v-for="group in groupedConferences" :key="group.group">
-            <div v-if="group.items.length > 0" class="conf-group-label">{{ group.group }}</div>
-            <label 
-              v-for="conf in group.items" 
-              :key="conf"
-              class="multiselect-option"
-              @click.prevent="toggleConference(conf)"
+      <button
+        v-if="selectedConferenceOptions.length"
+        type="button"
+        class="clear-conferences"
+        :disabled="controlsDisabled"
+        @click="clearConferenceSelections"
+      >
+        Clear
+      </button>
+      <Multiselect
+        v-model="selectedConferenceOptions"
+        :options="conferenceOptions"
+        :multiple="true"
+        :close-on-select="false"
+        :clear-on-select="false"
+        :preserve-search="true"
+        :preselect-first="false"
+        :group-values="'items'"
+        :group-label="'group'"
+        track-by="value"
+        label="label"
+        placeholder=""
+        select-label="Press enter to select"
+        deselect-label="Press enter to remove"
+        selected-label="Selected"
+        :disabled="controlsDisabled"
+        :show-labels="false"
+      >
+        <template #selection="{ values, remove }">
+          <div class="multiselect-selection">
+            <span v-if="values.length === 0" class="multiselect-placeholder">
+              All Conferences
+            </span>
+            <span
+              v-else
+              v-for="option in values"
+              :key="option.value"
+              class="multiselect-pill"
             >
-              <input 
-                type="checkbox" 
-                :checked="selectedConferences?.includes(conf)"
+              {{ option.label }}
+              <button
+                type="button"
+                class="pill-remove"
                 :disabled="controlsDisabled"
-                @click.stop
+                @click.stop="!controlsDisabled && remove(option)"
               >
-              {{ conf }}
-            </label>
+                ×
+              </button>
+            </span>
           </div>
-        </div>
-      </div>
+        </template>
+        <template #group-label="{ group }">
+          <div class="multiselect-group-label">{{ group.group }}</div>
+        </template>
+        <template #option="{ option }">
+          <div class="multiselect-option-row">
+            {{ option.label }}
+          </div>
+        </template>
+      </Multiselect>
     </div>
 
     <!-- Date Range (Daily Reports only) -->
@@ -278,6 +302,28 @@ watch(controlsDisabled, (value) => {
   text-transform: uppercase;
 }
 
+.clear-conferences {
+  background: transparent;
+  border: 1px solid var(--border-glow);
+  color: var(--text-secondary);
+  font-family: 'Sora', sans-serif;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.clear-conferences:hover:not(:disabled) {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.clear-conferences:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .date-buttons,
 .position-buttons {
   display: flex;
@@ -374,88 +420,149 @@ watch(controlsDisabled, (value) => {
   color: var(--accent-gold);
 }
 
-.multiselect {
-  position: relative;
+:deep(.multiselect) {
+  width: 100%;
 }
 
-.multiselect-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
+:deep(.multiselect__tags) {
   background: var(--bg-dark);
   border: 1px solid var(--border-glow);
+  border-radius: 8px;
+  min-height: 44px;
+  padding: 0.35rem 0.5rem;
   color: var(--text-secondary);
-  font-family: 'Sora', sans-serif;
-  font-size: 0.75rem;
-  cursor: pointer;
-  border-radius: 4px;
-  min-width: 140px;
 }
 
-.multiselect-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  min-width: 200px;
+:deep(.multiselect__input) {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+:deep(.multiselect__single) {
+  color: var(--text-primary);
+}
+
+:deep(.multiselect__placeholder) {
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+:deep(.multiselect__tags-wrap) {
+  display: none;
+}
+
+.multiselect-selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.multiselect-placeholder {
+  color: var(--text-secondary);
+  opacity: 0.9;
+}
+
+.multiselect-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(0, 212, 255, 0.16);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border-glow);
+}
+
+.pill-remove {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.95em;
+  line-height: 1;
+  padding: 0;
+}
+
+.pill-remove:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:deep(.multiselect__option) {
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  padding: 0.5rem 0.75rem;
+}
+
+:deep(.multiselect__option--highlight) {
+  background: rgba(0, 212, 255, 0.12);
+  color: var(--text-primary);
+}
+
+:deep(.multiselect__option--selected) {
+  background: rgba(0, 212, 255, 0.08);
+  color: var(--text-primary);
+}
+
+:deep(.multiselect__content) {
+  max-height: 280px;
+}
+
+:deep(.multiselect__tag) {
+  background: var(--accent-cyan);
+  color: var(--bg-dark);
+  border-radius: 6px;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.75rem;
+}
+
+:deep(.multiselect__tag-icon) {
+  color: inherit;
+}
+
+:deep(.multiselect__select) {
+  color: var(--text-secondary);
+}
+
+.multiselect-summary {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.multiselect-group-label {
+  padding: 0.35rem 0.75rem 0.2rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.multiselect-option-row {
+  padding: 0.35rem 0.75rem;
+}
+
+/* Multiselect palette tweaks */
+:deep(.multiselect__content-wrapper) {
   background: var(--bg-card);
   border: 1px solid var(--border-glow);
-  border-radius: 8px;
-  margin-top: 0.25rem;
-  z-index: 100;
-  max-height: 300px;
-  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
-.clear-btn {
-  display: block;
-  width: 100%;
-  padding: 0.5rem;
-  background: rgba(255, 0, 0, 0.1);
-  border: none;
-  border-bottom: 1px solid var(--border-glow);
-  color: var(--accent-red);
-  font-family: 'Sora', sans-serif;
-  font-size: 0.75rem;
-  cursor: pointer;
-  text-align: center;
-}
-
-.clear-btn:hover {
-  background: rgba(255, 0, 0, 0.2);
-}
-
-.conf-group-label {
-  font-family: 'Sora', sans-serif;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  padding: 0.5rem 0.75rem 0.25rem;
-  border-top: 1px solid var(--border-glow);
-}
-
-.conf-group-label:first-child {
-  border-top: none;
-}
-
-.multiselect-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.8rem;
+:deep(.multiselect__option--disabled) {
+  opacity: 0.5;
+  background: var(--bg-card);
   color: var(--text-secondary);
-  cursor: pointer;
-  transition: background 0.2s ease;
 }
 
-.multiselect-option:hover {
-  background: rgba(0, 212, 255, 0.1);
+:deep(.multiselect__option--selected) {
+  background: rgba(0, 212, 255, 0.08);
+  color: var(--text-primary);
+  opacity: 1;
 }
 
-.multiselect-option input {
-  accent-color: var(--accent-cyan);
-  pointer-events: none;
+:deep(.multiselect__option--selected.multiselect__option--highlight) {
+  background: rgba(0, 212, 255, 0.18);
+  color: var(--text-primary);
 }
 </style>
