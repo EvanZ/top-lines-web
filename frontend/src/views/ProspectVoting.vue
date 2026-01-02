@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import VotingCard from '../components/VotingCard.vue'
 import SeasonPlayerCard from '../components/SeasonPlayerCard.vue'
+import { loadSharedFilters } from '../composables/useSharedFilters.js'
 
 const playerA = ref(null)
 const playerB = ref(null)
@@ -23,6 +24,17 @@ const eloRatingsMap = ref(new Map())
 const seasonPlayersById = ref(new Map())
 const selectedSeasonPlayer = ref(null)
 const seasonModalOpen = ref(false)
+
+// Use saved SettingsDrawer filters to align ranks with the main app filters
+const savedFilters = loadSharedFilters()
+const selectedClasses = ref(
+  Array.isArray(savedFilters.selectedClasses) && savedFilters.selectedClasses.length
+    ? savedFilters.selectedClasses
+    : ['freshman']
+)
+const rsciOnly = ref(!!savedFilters.rsciOnly)
+const selectedConferences = ref(savedFilters.selectedConferences || [])
+const selectedPosition = ref(savedFilters.selectedPosition || '')
 
 const apiBase = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '')
 const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
@@ -103,6 +115,13 @@ function conferenceTier(value) {
 function conferenceWeight(value) {
   const tier = conferenceTier(value)
   return CONF_TIER_WEIGHTS[tier] ?? CONF_TIER_WEIGHTS[3]
+}
+
+const combinedRankScore = (player) => {
+  const gp = Number(player.gp)
+  const ez = Number(player.ez)
+  if (!Number.isFinite(gp) || gp <= 0) return 0
+  return Number.isFinite(ez) ? ez / gp : 0
 }
 
 function getEzStats(players) {
@@ -281,6 +300,36 @@ async function loadPool() {
   rebuildWeights()
 }
 
+const filteredSeasonPlayers = computed(() => {
+  const classSet = new Set((selectedClasses.value || []).map((c) => c.toLowerCase()))
+  const confSet = new Set(selectedConferences.value || [])
+  const pos = selectedPosition.value || ''
+  const base = Array.from(seasonPlayersById.value.values()).filter((p) => {
+    const cls = (p.experience_display_value || '').toLowerCase()
+    const conf = p.team_conf
+    if (classSet.size && !classSet.has(cls)) return false
+    if (rsciOnly.value && !p.recruit_rank) return false
+    if (confSet.size && !confSet.has(conf)) return false
+    if (pos && p.position_display_name !== pos) return false
+    return true
+  })
+  if ((selectedClasses.value || []).length > 1) {
+    return [...base].sort((a, b) => combinedRankScore(b) - combinedRankScore(a))
+  }
+  return [...base].sort((a, b) => (a.class_rank ?? 1e6) - (b.class_rank ?? 1e6))
+})
+
+const filteredRankMap = computed(() => {
+  const map = new Map()
+  filteredSeasonPlayers.value.forEach((p, idx) => {
+    const pid = Number(p.player_id)
+    if (Number.isFinite(pid)) {
+      map.set(pid, idx + 1)
+    }
+  })
+  return map
+})
+
 function pickMatchupCandidate() {
   if (pool.value.length < 2) {
     throw new Error('Not enough players to create a matchup')
@@ -421,7 +470,11 @@ function openSeasonModal(playerId) {
     console.warn('No season player data found for', playerId)
     return
   }
-  selectedSeasonPlayer.value = player
+  const filteredRank = filteredRankMap.value.get(Number(playerId))
+  selectedSeasonPlayer.value = {
+    ...player,
+    display_rank: filteredRank ?? player.display_rank ?? player.class_rank
+  }
   seasonModalOpen.value = true
 }
 
