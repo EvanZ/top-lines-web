@@ -24,7 +24,7 @@ let feedbackToastTimer = null
 const navLinks = [
   { name: 'daily', label: 'Games', path: '/' },
   { name: 'schedule', label: 'Schedule', path: '/schedule' },
-  { name: 'rankings', label: 'Season', path: '/rankings' },
+  { name: 'rankings', label: 'Rankings', path: '/rankings' },
   { name: 'voting', label: 'Voting', path: '/voting' },
   { name: 'glossary', label: 'Glossary', path: '/glossary' }
 ]
