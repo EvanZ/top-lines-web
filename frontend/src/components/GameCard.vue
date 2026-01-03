@@ -245,7 +245,12 @@ onUnmounted(() => {
               <span v-if="!home.logo" class="logo-fallback">{{ home.abbrev || home.location || 'Home' }}</span>
             </div>
             <div class="team-copy">
-              <div class="team-name">{{ home.location || home.name || 'Home' }}</div>
+              <div
+                class="team-name"
+                :title="home.location || home.name || home.abbrev || home.short_name || 'Home'"
+              >
+                {{ home.abbrev || home.short_name || home.location || home.name || 'Home' }}
+              </div>
               <div class="team-sub">
                 <!-- <span class="abbr">{{ home.abbrev || 'HOME' }}</span> -->
                 <span class="record">{{ recordLabel(home) }}</span>
@@ -258,7 +263,12 @@ onUnmounted(() => {
           </div>
           <div class="team align-right">
             <div class="team-copy align-right">
-              <div class="team-name">{{ away.location || away.name || 'Away' }}</div>
+              <div
+                class="team-name"
+                :title="away.location || away.name || away.abbrev || away.short_name || 'Away'"
+              >
+                {{ away.abbrev || away.short_name || away.location || away.name || 'Away' }}
+              </div>
               <div class="team-sub">
                 <span class="record">{{ recordLabel(away) }}</span>
                 <!-- <span class="abbr">{{ away.abbrev || 'AWAY' }}</span> -->
