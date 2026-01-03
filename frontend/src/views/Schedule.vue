@@ -116,14 +116,34 @@ const dayLabel = computed(() => {
 
 const buildDateOptions = (dates) => {
   const today = toLocalDateString(new Date())
-  const sorted = [...(dates || [])].sort((a, b) => {
-    const da = parseLocalDate(a)?.getTime() ?? 0
-    const db = parseLocalDate(b)?.getTime() ?? 0
-    return da - db
+  const sorted = [...(dates || [])]
+    .map((d) => ({ d, ts: parseLocalDate(d)?.getTime() ?? 0 }))
+    .filter((entry) => entry.ts > 0)
+    .sort((a, b) => a.ts - b.ts)
+    .map((entry) => entry.d)
+
+  const future = sorted.filter((d) => d >= today)
+  const past = sorted.filter((d) => d < today).reverse() // newest past first
+
+  const options = []
+  if (future.includes(today)) {
+    options.push(today)
+  }
+  // Add near-future after today
+  future.forEach((d) => {
+    if (d !== today && options.length < 5) options.push(d)
   })
-  const futureFirst = sorted.filter((d) => d >= today)
-  const past = sorted.filter((d) => d < today)
-  return [...futureFirst, ...past].slice(0, 3)
+  // Add up to two most recent past days
+  past.slice(0, 2).forEach((d) => {
+    if (!options.includes(d) && options.length < 7) options.push(d)
+  })
+
+  const unique = Array.from(new Set(options.length ? options : sorted.slice(0, 5)))
+  return unique.sort((a, b) => {
+    const ta = parseLocalDate(a)?.getTime() ?? 0
+    const tb = parseLocalDate(b)?.getTime() ?? 0
+    return ta - tb
+  })
 }
 
 const dateOptions = computed(() => buildDateOptions(scheduleDates.value))
@@ -207,13 +227,16 @@ const setConference = (conf) => {
 
 const loadSeasonRanks = async () => {
   try {
-    let rankingsDate = meta.value?.rankings_date
+    let rankingsDate = null
+    // Always prefer the latest rankings from the manifest
+    const manifestResp = await fetch(`${dataBase}/manifest.json`, { cache: 'no-store' })
+    if (manifestResp.ok) {
+      const manifest = await manifestResp.json()
+      rankingsDate = manifest?.[gender.value || 'men']?.rankings?.[0] || manifest?.latest_date || rankingsDate
+    }
+    // Fallback to schedule meta if manifest missing
     if (!rankingsDate) {
-      const manifestResp = await fetch(`${dataBase}/manifest.json`, { cache: 'no-store' })
-      if (manifestResp.ok) {
-        const manifest = await manifestResp.json()
-        rankingsDate = manifest?.[gender.value || 'men']?.rankings?.[0] || manifest?.latest_date
-      }
+      rankingsDate = meta.value?.rankings_date
     }
     if (!rankingsDate) return
     const resp = await fetch(`${dataBase}/${gender.value}/rankings/${rankingsDate}.json`, { cache: 'no-store' })
@@ -252,6 +275,17 @@ const rankMap = computed(() => {
     const pid = Number(p.player_id)
     if (!Number.isFinite(pid)) return
     map.set(pid, idx + 1)
+  })
+  return map
+})
+
+const seasonPlayerMap = computed(() => {
+  const map = new Map()
+  seasonPlayers.value.forEach((p) => {
+    const pid = Number(p.player_id)
+    if (Number.isFinite(pid)) {
+      map.set(pid, p)
+    }
   })
   return map
 })
@@ -377,6 +411,7 @@ onBeforeUnmount(() => {
         :rsciOnly="rsciOnly"
         :selectedConferences="selectedConferences"
         :rankMap="rankMap"
+        :season-players-map="seasonPlayerMap"
       />
       <p v-if="decoratedGames.length === 0" class="no-data">
         No games match these filters. Try adjusting conferences or toggles.

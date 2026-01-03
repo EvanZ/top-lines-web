@@ -10,6 +10,7 @@ const props = defineProps({
   rsciOnly: { type: Boolean, default: false },
   selectedConferences: { type: Array, default: () => [] },
   rankMap: { type: Object, default: null },
+  seasonPlayersMap: { type: Object, default: null },
 })
 
 const placeholder = new URL('../assets/player-placeholder.svg', import.meta.url).href
@@ -17,7 +18,28 @@ const placeholder = new URL('../assets/player-placeholder.svg', import.meta.url)
 const home = computed(() => props.game?.home || {})
 const away = computed(() => props.game?.away || {})
 const odds = computed(() => props.game?.odds || null)
-const featuredPlayers = computed(() => props.game?.featured_players || [])
+const seasonPlayersMap = computed(() => (props.seasonPlayersMap instanceof Map ? props.seasonPlayersMap : null))
+
+const featuredPlayers = computed(() => {
+  const base = props.game?.featured_players || []
+  if (!seasonPlayersMap.value) return base
+  return base.map((p) => {
+    const season = seasonPlayersMap.value.get(Number(p.player_id))
+    if (!season) return p
+    const merged = {
+      ...p,
+      ...season,
+      player_id: Number(p.player_id) || season.player_id
+    }
+    if (!merged.headshot && season.headshot_href) {
+      merged.headshot = season.headshot_href
+    }
+    if (!merged.display_name && season.display_name) {
+      merged.display_name = season.display_name
+    }
+    return merged
+  })
+})
 const powerMatchup = computed(() => home.value?.is_power || away.value?.is_power)
 const activePlayer = ref(null)
 const nowTs = ref(Date.now())
