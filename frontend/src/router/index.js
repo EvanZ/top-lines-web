@@ -1,9 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import DailyReports from '../views/DailyReports.vue'
-import ScheduleView from '../views/Schedule.vue'
-import SeasonRankings from '../views/SeasonRankings.vue'
-import ProspectVoting from '../views/ProspectVoting.vue'
-import Glossary from '../views/Glossary.vue'
+const DailyReports = () => import('../views/DailyReports.vue')
+const ScheduleView = () => import('../views/Schedule.vue')
+const SeasonRankings = () => import('../views/SeasonRankings.vue')
+const ProspectVoting = () => import('../views/ProspectVoting.vue')
+const Glossary = () => import('../views/Glossary.vue')
 
 const routes = [
   {

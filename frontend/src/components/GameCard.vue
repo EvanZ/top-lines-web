@@ -22,22 +22,18 @@ const seasonPlayersMap = computed(() => (props.seasonPlayersMap instanceof Map ?
 
 const featuredPlayers = computed(() => {
   const base = props.game?.featured_players || []
-  if (!seasonPlayersMap.value) return base
+  // If a schedule/game instance was passed without merged season data, enrich minimally
+  if (!seasonPlayersMap.value || !base.length) return base
   return base.map((p) => {
     const season = seasonPlayersMap.value.get(Number(p.player_id))
     if (!season) return p
-    const merged = {
-      ...p,
+    return {
       ...season,
-      player_id: Number(p.player_id) || season.player_id
+      ...p,
+      player_id: Number(p.player_id) || season.player_id,
+      headshot: p.headshot || season.headshot_href || p.headshot_href,
+      display_name: p.display_name || season.display_name,
     }
-    if (!merged.headshot && season.headshot_href) {
-      merged.headshot = season.headshot_href
-    }
-    if (!merged.display_name && season.display_name) {
-      merged.display_name = season.display_name
-    }
-    return merged
   })
 })
 const powerMatchup = computed(() => home.value?.is_power || away.value?.is_power)
@@ -139,19 +135,6 @@ const recordLabel = (team) => {
   return '—'
 }
 
-const filteredPlayers = computed(() => {
-  const classSet = new Set((props.selectedClasses || []).map((c) => c.toLowerCase()))
-  const confSet = new Set(props.selectedConferences || [])
-  return featuredPlayers.value.filter((player) => {
-    const cls = (player.class || '').toLowerCase()
-    const conf = player.team_conf
-    if (classSet.size && cls && !classSet.has(cls)) return false
-    if (props.rsciOnly && !player.recruit_rank) return false
-    if (confSet.size && conf && !confSet.has(conf)) return false
-    return true
-  })
-})
-
 const displayedPlayers = computed(() => {
   const rankLookup = props.rankMap instanceof Map ? props.rankMap : null
   const rank = (p) => {
@@ -159,7 +142,7 @@ const displayedPlayers = computed(() => {
     const lookupRank = rankLookup ? rankLookup.get(pid) : undefined
     return lookupRank ?? p.display_rank ?? p.class_rank ?? p.overall_rank ?? 1e6
   }
-  return [...filteredPlayers.value]
+  return [...featuredPlayers.value]
     .map((p) => {
       const r = rank(p)
       return {

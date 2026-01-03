@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
+import BaseToggle from './BaseToggle.vue'
 
 const props = defineProps({
   dateRange: Number,
@@ -173,14 +174,12 @@ const clearConferenceSelections = () => {
       v-if="showCompare"
       class="control-group toggle-group compare-toggle"
     >
-      <label class="toggle-switch">
-        <input
-          type="checkbox"
-          :checked="compareEnabled"
-          @change="emit('update:compareEnabled', $event.target.checked)"
-        >
-        <span class="toggle-slider"></span>
-      </label>
+      <BaseToggle
+        :model-value="compareEnabled"
+        :disabled="controlsDisabled"
+        aria-label="Toggle compare mode"
+        @update:modelValue="emit('update:compareEnabled', $event)"
+      />
       <span class="toggle-label" :class="{ active: compareEnabled }">
         Compare
         <span class="compare-tooltip" tabindex="0" aria-label="Compare mode help">
@@ -358,54 +357,6 @@ const clearConferenceSelections = () => {
 
 .toggle-group {
   gap: 0.5rem;
-}
-
-.toggle-switch {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  cursor: pointer;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--bg-dark);
-  border: 1px solid var(--border-glow);
-  border-radius: 24px;
-  transition: all 0.3s ease;
-}
-
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  left: 2px;
-  bottom: 2px;
-  background: var(--text-secondary);
-  border-radius: 50%;
-  transition: all 0.3s ease;
-}
-
-.toggle-switch input:checked + .toggle-slider {
-  background: rgba(255, 215, 0, 0.2);
-  border-color: var(--accent-gold);
-}
-
-.toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(20px);
-  background: var(--accent-gold);
-  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
 .toggle-label {

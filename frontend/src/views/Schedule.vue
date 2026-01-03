@@ -7,6 +7,15 @@ import { useConferences } from '../composables/usePlayerData.js'
 import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFilters.js'
 import { mergeFeaturedPlayers } from '../utils/schedulePlayers.js'
 
+// Simple in-memory caches to avoid redundant network fetches during navigation
+const manifestCache = {
+  data: null,
+  promise: null,
+}
+const rankingsCache = new Map() // key: `${gender}:${date}`
+const parseDateCache = new Map()
+const localDateStringCache = new Map()
+
 const gender = inject('gender')
 const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
 const { games, meta, loading, error, loadSchedule } = useScheduleData()
@@ -58,24 +67,31 @@ const filteredGames = computed(() => {
   }
 
   return [...games.value]
-    .filter((game) => {
+    .map((game) => {
+      const mergedPlayers = getFilteredPlayers(game)
+      return { game, mergedPlayers }
+    })
+    .filter(({ game, mergedPlayers }) => {
       const homeConf = game?.home?.conference
       const awayConf = game?.away?.conference
       if (powerOnly.value && !(isPower(homeConf) || isPower(awayConf))) return false
       if (confSet.size) {
         const teamMatch = confSet.has(homeConf) || confSet.has(awayConf)
-        const playerMatch = (game?.featured_players || []).some((p) => confSet.has(p.team_conf))
+        const playerMatch = (mergedPlayers || []).some((p) => confSet.has(p.team_conf))
         if (!teamMatch && !playerMatch) return false
       }
       // If onlyWithPlayers is on, skip games with zero filtered players
       if (onlyWithPlayers.value) {
-        const filteredPlayers = getFilteredPlayers(game)
-        if (!filteredPlayers.length) return false
+        if (!mergedPlayers.length) return false
       }
       const gStatus = statusFor(game)
       if (statusSet.size && !statusSet.has(gStatus)) return false
       return true
     })
+    .map(({ game, mergedPlayers }) => ({
+      ...game,
+      featured_players: mergedPlayers
+    }))
     .sort((a, b) => {
       const t1 = a?.start_time ? new Date(a.start_time).getTime() : Number.POSITIVE_INFINITY
       const t2 = b?.start_time ? new Date(b.start_time).getTime() : Number.POSITIVE_INFINITY
@@ -84,26 +100,76 @@ const filteredGames = computed(() => {
 })
 
 const decoratedGames = computed(() => {
-  const ranks = rankMap.value
-  const seasonMap = seasonPlayerMap.value
-  return filteredGames.value.map((game) => ({
-    ...game,
-    featured_players: mergeFeaturedPlayers(game, seasonMap, ranks)
-  }))
+  // filteredGames already merges and filters featured_players
+  return filteredGames.value
 })
 
 const toLocalDateString = (dt) => {
+  if (!(dt instanceof Date)) return ''
+  const key = dt.getTime()
+  if (Number.isFinite(key) && localDateStringCache.has(key)) {
+    return localDateStringCache.get(key)
+  }
   const y = dt.getFullYear()
   const m = String(dt.getMonth() + 1).padStart(2, '0')
   const d = String(dt.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
+  const val = `${y}-${m}-${d}`
+  if (Number.isFinite(key)) {
+    localDateStringCache.set(key, val)
+  }
+  return val
 }
 
 const parseLocalDate = (str) => {
   if (!str || typeof str !== 'string') return null
+  if (parseDateCache.has(str)) return parseDateCache.get(str)
   const [y, m, d] = str.split('-').map(Number)
   if (!y || !m || !d) return null
-  return new Date(y, m - 1, d)
+  const parsed = new Date(y, m - 1, d)
+  parseDateCache.set(str, parsed)
+  return parsed
+}
+
+const loadManifest = async () => {
+  if (manifestCache.data) return manifestCache.data
+  if (!manifestCache.promise) {
+    manifestCache.promise = fetch(`${dataBase}/manifest.json`, { cache: 'no-store' })
+      .then((resp) => {
+        if (!resp.ok) throw new Error(`Manifest HTTP ${resp.status}`)
+        return resp.json()
+      })
+      .then((data) => {
+        manifestCache.data = data
+        return data
+      })
+      .catch((err) => {
+        manifestCache.promise = null
+        throw err
+      })
+  }
+  return manifestCache.promise
+}
+
+const loadRankingsData = async (genderKey, rankingsDate) => {
+  if (!genderKey || !rankingsDate) return null
+  const cacheKey = `${genderKey}:${rankingsDate}`
+  const cached = rankingsCache.get(cacheKey)
+  if (cached) return cached
+  const promise = fetch(`${dataBase}/${genderKey}/rankings/${rankingsDate}.json`, { cache: 'no-store' })
+    .then((resp) => {
+      if (!resp.ok) throw new Error(`Rankings HTTP ${resp.status}`)
+      return resp.json()
+    })
+    .then((data) => {
+      rankingsCache.set(cacheKey, data)
+      return data
+    })
+    .catch((err) => {
+      rankingsCache.delete(cacheKey)
+      throw err
+    })
+  rankingsCache.set(cacheKey, promise)
+  return promise
 }
 
 const dayLabel = computed(() => {
@@ -195,9 +261,7 @@ const getFilteredPlayers = (game) => {
 
 const refreshScheduleDate = async () => {
   try {
-    const response = await fetch(`${dataBase}/manifest.json`, { cache: 'no-store' })
-    if (!response.ok) throw new Error(`Manifest HTTP ${response.status}`)
-    const manifest = await response.json()
+    const manifest = await loadManifest()
     const key = gender.value || 'men'
     const scheduleList = manifest?.[key]?.schedule || []
     scheduleDates.value = scheduleList
@@ -231,19 +295,19 @@ const loadSeasonRanks = async () => {
   try {
     let rankingsDate = null
     // Always prefer the latest rankings from the manifest
-    const manifestResp = await fetch(`${dataBase}/manifest.json`, { cache: 'no-store' })
-    if (manifestResp.ok) {
-      const manifest = await manifestResp.json()
+    try {
+      const manifest = await loadManifest()
       rankingsDate = manifest?.[gender.value || 'men']?.rankings?.[0] || manifest?.latest_date || rankingsDate
+    } catch (err) {
+      console.error('Manifest load failed for rankings, will fall back:', err)
     }
     // Fallback to schedule meta if manifest missing
     if (!rankingsDate) {
       rankingsDate = meta.value?.rankings_date
     }
     if (!rankingsDate) return
-    const resp = await fetch(`${dataBase}/${gender.value}/rankings/${rankingsDate}.json`, { cache: 'no-store' })
-    if (!resp.ok) throw new Error(`Rankings HTTP ${resp.status}`)
-    const data = await resp.json()
+    const data = await loadRankingsData(gender.value || 'men', rankingsDate)
+    if (!data) return
     seasonPlayers.value = (data.players || []).map((p) => ({
       ...p,
       player_id: Number(p.player_id),
