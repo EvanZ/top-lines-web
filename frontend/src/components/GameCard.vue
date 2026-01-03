@@ -145,9 +145,9 @@ const filteredPlayers = computed(() => {
   return featuredPlayers.value.filter((player) => {
     const cls = (player.class || '').toLowerCase()
     const conf = player.team_conf
-    if (classSet.size && !classSet.has(cls)) return false
+    if (classSet.size && cls && !classSet.has(cls)) return false
     if (props.rsciOnly && !player.recruit_rank) return false
-    if (confSet.size && !confSet.has(conf)) return false
+    if (confSet.size && conf && !confSet.has(conf)) return false
     return true
   })
 })

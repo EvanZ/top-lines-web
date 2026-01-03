@@ -5,6 +5,7 @@ import SettingsDrawer from '../components/SettingsDrawer.vue'
 import { useScheduleData } from '../composables/useScheduleData.js'
 import { useConferences } from '../composables/usePlayerData.js'
 import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFilters.js'
+import { mergeFeaturedPlayers } from '../utils/schedulePlayers.js'
 
 const gender = inject('gender')
 const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
@@ -84,14 +85,11 @@ const filteredGames = computed(() => {
 
 const decoratedGames = computed(() => {
   const ranks = rankMap.value
-  return filteredGames.value.map((game) => {
-    const players = (game.featured_players || []).map((p) => {
-      const pid = Number(p.player_id)
-      const r = ranks.get(pid)
-      return r ? { ...p, display_rank: r, class_rank: r } : p
-    })
-    return { ...game, featured_players: players }
-  })
+  const seasonMap = seasonPlayerMap.value
+  return filteredGames.value.map((game) => ({
+    ...game,
+    featured_players: mergeFeaturedPlayers(game, seasonMap, ranks)
+  }))
 })
 
 const toLocalDateString = (dt) => {
@@ -180,13 +178,17 @@ const combinedRankScore = (player) => {
 const getFilteredPlayers = (game) => {
   const classSet = new Set((selectedClasses.value || []).map((c) => c.toLowerCase()))
   const confSet = new Set(selectedConferences.value || [])
-  const players = game?.featured_players || []
-  return players.filter((p) => {
-    const cls = (p.class || '').toLowerCase()
+  const merged = mergeFeaturedPlayers(game, seasonPlayerMap.value, rankMap.value)
+  // If season data has not loaded yet, keep players so games are not filtered out
+  if (!(seasonPlayerMap.value?.size)) {
+    return merged
+  }
+  return merged.filter((p) => {
+    const cls = (p.experience_display_value || p.class || '').toLowerCase()
     const conf = p.team_conf
-    if (classSet.size && !classSet.has(cls)) return false
+    if (classSet.size && cls && !classSet.has(cls)) return false
     if (rsciOnly.value && !p.recruit_rank) return false
-    if (confSet.size && !confSet.has(conf)) return false
+    if (confSet.size && conf && !confSet.has(conf)) return false
     return true
   })
 }
