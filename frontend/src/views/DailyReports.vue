@@ -8,7 +8,7 @@ import CompareToggle from '../components/CompareToggle.vue'
 import { usePlayerData, useConferences } from '../composables/usePlayerData.js'
 import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFilters.js'
 
-const { players, meta, loading, error, loadDailyReport } = usePlayerData()
+const { players, meta, loading, error, loadTopLinesByDates } = usePlayerData()
 const { conferences, loadConferences } = useConferences()
 const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
 
@@ -16,7 +16,6 @@ const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
 const gender = inject('gender')
 
 const selectedClasses = ref(['freshman'])
-const dateRange = ref(3)
 const rsciOnly = ref(false)
 const compareEnabled = ref(false)
 const selectedCompare = ref([])
@@ -27,7 +26,9 @@ let flipTimer = null
 const shakeCards = ref(new Set())
 const shakeTimers = new Map()
 const selectedPosition = ref('')
-const availableDate = ref('2025-12-23') // Latest available date
+const availableDate = ref('2025-12-23') // Latest available date (toplines)
+const availableToplineDates = ref([])
+const selectedDates = ref([])
 const availableRankingsDate = ref('2025-12-23')
 const seasonPlayers = ref([])
 const hideUnranked = ref(false)
@@ -46,6 +47,9 @@ if (typeof savedFilters.selectedPosition === 'string') {
 }
 if (Array.isArray(savedFilters.selectedConferences)) {
   selectedConferences.value = savedFilters.selectedConferences
+}
+if (Array.isArray(savedFilters.toplineDates)) {
+  selectedDates.value = savedFilters.toplineDates
 }
 
 const selectedClassLabel = computed(() => {
@@ -170,11 +174,28 @@ const rankedPlayers = computed(() => (
   }))
 ))
 
-// Compute subtitle based on meta
-const dateRangeText = computed(() => {
-  if (!meta.value) return ''
-  return `${formatDateDisplay(meta.value.start_date)} → ${formatDateDisplay(meta.value.end_date)}`
+const selectedDateLabel = computed(() => {
+  if (!selectedDates.value.length) return ''
+  const [first, ...rest] = selectedDates.value
+  if (!rest.length) return formatDateDisplay(first)
+  return `${formatDateDisplay(first)} (+${rest.length} more)`
 })
+
+const toplineDateOptions = computed(() => availableToplineDates.value || [])
+
+const toggleDate = (dateStr) => {
+  if (!dateStr) return
+  const current = new Set(selectedDates.value)
+  if (current.has(dateStr)) {
+    if (current.size === 1) return // keep at least one
+    current.delete(dateStr)
+  } else {
+    current.add(dateStr)
+  }
+  // keep selection ordered by recency as in manifest
+  const ordered = toplineDateOptions.value.filter((d) => current.has(d))
+  selectedDates.value = ordered
+}
 
 function formatDateDisplay(dateStr) {
   if (!dateStr) return ''
@@ -244,11 +265,14 @@ function toggleCardFlip(player, event) {
 }
 
 
-// Reload data when dateRange or gender changes
+// Reload data when date selection or gender changes
 const reloadData = async () => {
   const seasonDate = availableRankingsDate.value || availableDate.value
+  if (!selectedDates.value.length && availableDate.value) {
+    selectedDates.value = [availableDate.value]
+  }
   await Promise.all([
-    loadDailyReport(availableDate.value, dateRange.value, gender.value),
+    loadTopLinesByDates(selectedDates.value, gender.value),
     loadSeasonRankings(seasonDate, gender.value),
     loadConferences(gender.value)
   ])
@@ -260,16 +284,24 @@ const refreshAvailableDate = async () => {
     if (!response.ok) throw new Error(`Manifest HTTP ${response.status}`)
     const manifest = await response.json()
     const key = gender.value || 'men'
-    const dailyList = manifest?.[key]?.daily || []
+    const dailyList = manifest?.[key]?.toplines || manifest?.[key]?.daily || []
     const rankingsList = manifest?.[key]?.rankings || []
     availableDate.value = dailyList[0] || manifest?.latest_date || availableDate.value
+    availableToplineDates.value = dailyList
+    if (!selectedDates.value.length) {
+      selectedDates.value = dailyList.slice(0, 1)
+    } else {
+      const allowed = new Set(dailyList)
+      const filtered = selectedDates.value.filter((d) => allowed.has(d))
+      selectedDates.value = filtered.length ? filtered : dailyList.slice(0, 1)
+    }
     availableRankingsDate.value = rankingsList[0] || manifest?.latest_date || availableRankingsDate.value
   } catch (e) {
     console.error('Error loading manifest for daily reports:', e)
   }
 }
 
-watch(dateRange, reloadData)
+watch(selectedDates, reloadData)
 watch(gender, async () => {
   await refreshAvailableDate()
   await reloadData()
@@ -294,7 +326,8 @@ watch(
       selectedClasses: selectedClasses.value,
       rsciOnly: rsciOnly.value,
       selectedPosition: selectedPosition.value,
-      selectedConferences: selectedConferences.value
+      selectedConferences: selectedConferences.value,
+      toplineDates: selectedDates.value,
     })
   },
   { deep: true }
@@ -321,7 +354,6 @@ onBeforeRouteLeave(() => {
       <SettingsDrawer
         v-model:selectedClasses="selectedClasses"
         v-model:gender="gender"
-        v-model:dateRange="dateRange"
         v-model:rsciOnly="rsciOnly"
         v-model:compareEnabled="compareEnabled"
         v-model:selectedConferences="selectedConferences"
@@ -329,7 +361,7 @@ onBeforeRouteLeave(() => {
       :classes="classes"
       :conferences="conferences"
       :disableControls="compareEnabled"
-      showDateRange
+      :showDateRange="false"
       :showClass="true"
       :showRsci="true"
       :showPosition="true"
@@ -339,7 +371,18 @@ onBeforeRouteLeave(() => {
       <div class="page-header">
         <h1 class="page-title">Noteworthy Performances</h1>
         <p class="page-subtitle">
-          <span v-if="dateRangeText">from {{ dateRangeText }}.</span>
+          <!-- <span v-if="selectedDateLabel">for {{ selectedDateLabel }}.</span> -->
+          <div class="date-pill-row" v-if="toplineDateOptions.length">
+            <button
+              v-for="d in toplineDateOptions.slice(0,7)"
+              :key="d"
+              class="date-pill"
+              :class="{ active: selectedDates.includes(d) }"
+              @click="toggleDate(d)"
+            >
+              <span class="date-pill-day">{{ formatDateDisplay(d) }}</span>
+            </button>
+          </div>
           <span>&nbsp;Click to flip cards between daily and season performance.</span>
         </p>
       </div>
@@ -533,6 +576,41 @@ onBeforeRouteLeave(() => {
   color: var(--text-secondary);
   font-size: 1rem;
   margin: 0;
+}
+
+.date-pill-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.date-pill {
+  border: 1px solid var(--border-glow);
+  background: rgba(6, 12, 20, 0.6);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 0.4rem 0.7rem;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-pill:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+
+.date-pill.active {
+  border-color: var(--accent-gold);
+  background: rgba(255, 215, 0, 0.12);
+  color: var(--text-primary);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.25);
+}
+
+.date-pill-day {
+  display: inline-block;
 }
 
 

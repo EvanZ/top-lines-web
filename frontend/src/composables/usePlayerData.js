@@ -10,6 +10,45 @@ const conferences = ref([])
 const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
 
 export function usePlayerData() {
+  const loadTopLinesByDates = async (dates = [], gender = 'men') => {
+    const uniqueDates = Array.from(new Set((dates || []).filter(Boolean)))
+    if (!uniqueDates.length) {
+      players.value = []
+      meta.value = null
+      return
+    }
+    loading.value = true
+    error.value = null
+    try {
+      const fetched = await Promise.all(
+        uniqueDates.map(async (d) => {
+          const resp = await fetch(`${dataBase}/${gender}/toplines/${d}.json`, { cache: 'no-store' })
+          if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${d}`)
+          const data = await resp.json()
+          return data.players || []
+        })
+      )
+      const merged = fetched.flat()
+      players.value = merged.map((p) => ({
+        ...p,
+        classLower: (p.experience_display_value || 'freshman').toLowerCase(),
+        rsci_rank: p.recruit_rank,
+        conference: p.team_conf,
+      }))
+      meta.value = {
+        dates: uniqueDates,
+        gender,
+        total_players: merged.length,
+      }
+    } catch (e) {
+      console.error('Error loading toplines by dates:', e)
+      error.value = e.message
+      players.value = []
+    } finally {
+      loading.value = false
+    }
+  }
+
   const loadDailyReport = async (date, days = 3, gender = 'men') => {
     loading.value = true
     error.value = null
@@ -57,7 +96,7 @@ export function usePlayerData() {
     }
   }
 
-  return { players, meta, loading, error, loadDailyReport, loadSeasonRankings }
+  return { players, meta, loading, error, loadDailyReport, loadSeasonRankings, loadTopLinesByDates }
 }
 
 export function useConferences() {
