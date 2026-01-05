@@ -2,6 +2,9 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import Sparkline from './Sparkline.vue'
 import SeasonPlayerCard from './SeasonPlayerCard.vue'
+import DailyPlayerCard from './DailyPlayerCard.vue'
+
+const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
 
 const props = defineProps({
   game: { type: Object, required: true },
@@ -11,6 +14,8 @@ const props = defineProps({
   selectedConferences: { type: Array, default: () => [] },
   rankMap: { type: Object, default: null },
   seasonPlayersMap: { type: Object, default: null },
+  toplinesPlayers: { type: Array, default: () => [] },
+  toplinesRaw: { type: Array, default: () => [] },
 })
 
 const placeholder = new URL('../assets/player-placeholder.svg', import.meta.url).href
@@ -19,20 +24,49 @@ const home = computed(() => props.game?.home || {})
 const away = computed(() => props.game?.away || {})
 const odds = computed(() => props.game?.odds || null)
 const seasonPlayersMap = computed(() => (props.seasonPlayersMap instanceof Map ? props.seasonPlayersMap : null))
+const lazyToplines = ref([])
+const toplineDate = computed(() => {
+  const raw = props.game?.start_time
+  if (!raw) return null
+  const dt = new Date(raw)
+  if (!Number.isFinite(dt.getTime())) return null
+  const y = dt.getFullYear()
+  const m = String(dt.getMonth() + 1).padStart(2, '0')
+  const d = String(dt.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+})
+const toplineMap = computed(() => {
+  const map = new Map()
+  const source =
+    (props.toplinesRaw && props.toplinesRaw.length ? props.toplinesRaw : null) ||
+    (props.toplinesPlayers && props.toplinesPlayers.length ? props.toplinesPlayers : null) ||
+    (lazyToplines.value && lazyToplines.value.length ? lazyToplines.value : [])
+  ;(source || []).forEach((p) => {
+    const pid = Number(p.player_id)
+    if (Number.isFinite(pid)) map.set(pid, p)
+  })
+  return map
+})
 
 const featuredPlayers = computed(() => {
-  const base = props.game?.featured_players || []
+  const base =
+    (props.toplinesPlayers && props.toplinesPlayers.length)
+      ? props.toplinesPlayers
+      : props.game?.featured_players || []
   // If a schedule/game instance was passed without merged season data, enrich minimally
   if (!seasonPlayersMap.value || !base.length) return base
   return base.map((p) => {
     const season = seasonPlayersMap.value.get(Number(p.player_id))
-    if (!season) return p
+    const toplineEntry = toplineMap.value.get(Number(p.player_id))
+    const headshot = p.headshot || p.headshot_href || season?.headshot_href
     return {
       ...season,
       ...p,
-      player_id: Number(p.player_id) || season.player_id,
-      headshot: p.headshot || season.headshot_href || p.headshot_href,
-      display_name: p.display_name || season.display_name,
+      game_rank: toplineEntry?.game_rank ?? p.game_rank,
+      player_id: Number(p.player_id) || season?.player_id || p.player_id,
+      headshot,
+      headshot_href: headshot || season?.headshot_href,
+      display_name: p.display_name || season?.display_name || p.name,
     }
   })
 })
@@ -77,6 +111,36 @@ const seasonPlayer = computed(() => {
     ez_history: p.ez_history || [],
   }
 })
+
+const hasTopline = computed(() => {
+  if (!activePlayer.value) return false
+  const pid = Number(activePlayer.value.player_id)
+  return toplineMap.value.has(pid)
+})
+
+const gamePlayer = computed(() => {
+  if (!activePlayer.value) return null
+  const pid = Number(activePlayer.value.player_id)
+  const entry = toplineMap.value.get(pid)
+  if (!entry) return null
+  const seasonRank = Number(activePlayer.value?.chip_display_rank ?? activePlayer.value?.class_rank ?? activePlayer.value?.display_rank)
+  return {
+    ...entry,
+    display_rank:
+      Number.isFinite(seasonRank) && seasonRank > 0
+        ? seasonRank
+        : entry.display_rank,
+    class_rank: entry.class_rank,
+  }
+})
+
+const showSeasonToggle = computed(() => hasTopline.value && !!seasonPlayer.value)
+const showGameCard = computed(() => !!gamePlayer.value)
+const flippedToSeason = ref(false)
+const toggleView = () => {
+  if (!showSeasonToggle.value) return
+  flippedToSeason.value = !flippedToSeason.value
+}
 
 const startTimeLabel = computed(() => {
   const raw = props.game?.start_time
@@ -142,26 +206,59 @@ const displayedPlayers = computed(() => {
     const lookupRank = rankLookup ? rankLookup.get(pid) : undefined
     return lookupRank ?? p.display_rank ?? p.class_rank ?? p.overall_rank ?? 1e6
   }
-  return [...featuredPlayers.value]
-    .map((p) => {
+  const sorted = [...featuredPlayers.value]
+    .map((p, idx) => {
       const r = rank(p)
       return {
         ...p,
-        display_rank: r,
-        class_rank: r,
+        chip_rank: r,
+        game_rank: p.game_rank ?? p.display_rank ?? p.class_rank,
+        original_order: idx + 1,
       }
     })
-    .sort((a, b) => (a.display_rank ?? 1e6) - (b.display_rank ?? 1e6))
+    .sort((a, b) => (a.chip_rank ?? 1e6) - (b.chip_rank ?? 1e6))
+
+  return sorted.map((p, idx) => ({
+    ...p,
+    chip_display_rank: Number.isFinite(p.chip_rank) && p.chip_rank > 0
+      ? p.chip_rank
+      : idx + 1,
+  }))
 })
 
-const openPlayer = (player) => {
+const ensureToplinesLoaded = async () => {
+  if (toplineMap.value.size) return
+  const date = toplineDate.value
+  const gid = Number(props.game?.game_id)
+  if (!date || !gid) return
+  try {
+    const resp = await fetch(`${dataBase}/${props.gender || 'men'}/toplines/${date}.json`, { cache: 'no-store' })
+    if (!resp.ok) return
+    const data = await resp.json()
+    const players = (data.players || []).filter((p) => Number(p.game_id) === gid)
+    if (players.length) {
+      lazyToplines.value = players
+    }
+  } catch (err) {
+    console.warn('Toplines fetch failed in card', err)
+  }
+}
+
+const openPlayer = async (player) => {
+  await ensureToplinesLoaded()
   // ensure we use the ranked instance so season ranks carry through
   const ranked = displayedPlayers.value.find((p) => p.player_id === player.player_id) || player
   activePlayer.value = ranked
+  const pid = Number(ranked.player_id)
+  flippedToSeason.value = !toplineMap.value.has(pid)
 }
 
 const closePlayer = () => {
-  activePlayer.value = null
+  // brief delay to allow flip transition before collapsing back to mini-grid
+  flippedToSeason.value = false
+  setTimeout(() => {
+    activePlayer.value = null
+  }, 180)
 }
 
 const chipBg = (player) => {
@@ -298,8 +395,8 @@ onUnmounted(() => {
             type="button"
             @click="openPlayer(player)"
           >
-            <div class="player-chip-inner" :style="chipBg(player)">
-              <div class="chip-rank">{{ player.display_rank ?? player.class_rank ?? player.overall_rank }}</div>
+              <div class="player-chip-inner" :style="chipBg(player)">
+              <div class="chip-rank">{{ player.chip_display_rank ?? player.chip_rank ?? player.display_rank ?? player.class_rank ?? player.overall_rank }}</div>
               <div class="headshot" :style="{ backgroundImage: `url('${player.headshot || placeholder}')` }">
                 <span v-if="!player.headshot" class="initials">
                   {{ (player.display_name || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() }}
@@ -321,16 +418,29 @@ onUnmounted(() => {
       </div>
 
       <!-- Back -->
-      <div class="card-face back">
-        <div class="back-content" v-if="seasonPlayer">
-          <button class="close-btn" type="button" @click="closePlayer" aria-label="Close">×</button>
-          <div class="season-card-wrapper">
-            <SeasonPlayerCard :player="seasonPlayer" :gender="gender" />
-          </div>
+      <div class="card-face back" @click="toggleView">
+        <div class="back-content" v-if="activePlayer">
+          <button class="close-btn" type="button" @click.stop="closePlayer" aria-label="Close">×</button>
+          <transition name="cardflip" mode="out-in">
+            <div
+              v-if="flippedToSeason || !showGameCard"
+              key="season"
+              class="season-card-wrapper flip-surface"
+            >
+              <SeasonPlayerCard :player="seasonPlayer" :gender="gender" />
+            </div>
+            <div
+              v-else
+              key="daily"
+              class="season-card-wrapper flip-surface"
+            >
+              <DailyPlayerCard :player="gamePlayer" :gender="gender" :show-season-rank="false" />
+            </div>
+          </transition>
         </div>
         <div v-else class="back-content empty">
-          <p>Select a player to view season details.</p>
-          <button class="close-btn" type="button" @click="closePlayer">Back</button>
+          <p>Select a player to view details.</p>
+          <button class="close-btn" type="button" @click.stop="closePlayer">Back</button>
         </div>
       </div>
     </div>
@@ -385,10 +495,6 @@ onUnmounted(() => {
   overflow: visible;
 }
 
-.game-card.flipped .card-shell {
-  min-height: 760px;
-}
-
 .game-card.flipped {
   border: none;
   padding: 0;
@@ -403,8 +509,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
-  transition: transform 0.55s ease;
+  height: auto;
+  transition: transform 0.65s ease;
   background: transparent;
 }
 
@@ -417,16 +523,26 @@ onUnmounted(() => {
 }
 
 .game-card.flipped .card-face.front {
+  position: absolute;
+  inset: 0;
+  height: auto;
   transform: rotateY(180deg);
+  pointer-events: none;
 }
 
 .card-face.back {
+  position: absolute;
+  inset: 0;
   transform: rotateY(-180deg);
   background: var(--bg-card);
   padding: 0;
+  min-height: 0;
 }
 
 .game-card.flipped .card-face.back {
+  position: relative;
+  inset: auto;
+  height: auto;
   transform: rotateY(0deg);
 }
 
@@ -756,6 +872,7 @@ onUnmounted(() => {
   height: 100%;
   padding: 0;
   overflow: auto;
+  position: relative;
 }
 
 .back-content.empty {
@@ -764,6 +881,38 @@ onUnmounted(() => {
   flex: 1;
   text-align: center;
   color: var(--text-secondary);
+}
+
+.cardflip-enter-active,
+.cardflip-leave-active {
+  transition: transform 0.35s ease, opacity 0.35s ease;
+  transform-style: preserve-3d;
+}
+
+.cardflip-enter-from {
+  opacity: 0;
+  transform: rotateY(90deg);
+}
+
+.cardflip-leave-to {
+  opacity: 0;
+  transform: rotateY(-90deg);
+}
+
+.flip-surface {
+  backface-visibility: hidden;
+}
+
+.game-card:hover .toggle-row {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.game-card.flipped .toggle-row {
+  transform: translateY(-2px) scale(1.12);
+}
+
+.game-card.flipped:hover .toggle-row {
+  transform: translateY(-2px) scale(1.16);
 }
 
 .back-header {

@@ -5,6 +5,7 @@ import DailyPlayerCard from '../components/DailyPlayerCard.vue'
 import SeasonPlayerCard from '../components/SeasonPlayerCard.vue'
 import SettingsDrawer from '../components/SettingsDrawer.vue'
 import CompareToggle from '../components/CompareToggle.vue'
+import DatePill from '../components/DatePill.vue'
 import { usePlayerData, useConferences } from '../composables/usePlayerData.js'
 import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFilters.js'
 
@@ -90,9 +91,24 @@ const loadSeasonRankings = async (date, gender = 'men') => {
   }
 }
 
+const toplinePlayersEnriched = computed(() => {
+  const map = seasonPlayersById.value
+  return players.value.map((player) => {
+    const season = map.get(player.player_id)
+    if (!season) return player
+    return {
+      ...player,
+      elo_rating: season.elo_rating ?? player.elo_rating,
+      elo_rank: season.elo_rank ?? player.elo_rank,
+      season_rank: season.display_rank ?? season.class_rank ?? player.season_rank,
+      team_logo: player.team_logo || season.team_logo,
+    }
+  })
+})
+
 const baseFilteredPlayers = computed(() => {
   const selected = new Set(selectedClasses.value)
-  const filtered = players.value.filter(player => {
+  const filtered = toplinePlayersEnriched.value.filter(player => {
     // Filter by class
     if (selected.size && !selected.has(player.classLower)) return false
     
@@ -373,15 +389,13 @@ onBeforeRouteLeave(() => {
         <p class="page-subtitle">
           <!-- <span v-if="selectedDateLabel">for {{ selectedDateLabel }}.</span> -->
           <div class="date-pill-row" v-if="toplineDateOptions.length">
-            <button
+            <DatePill
               v-for="d in toplineDateOptions.slice(0,7)"
               :key="d"
-              class="date-pill"
-              :class="{ active: selectedDates.includes(d) }"
-              @click="toggleDate(d)"
-            >
-              <span class="date-pill-day">{{ formatDateDisplay(d) }}</span>
-            </button>
+              :date="d"
+              :active="selectedDates.includes(d)"
+              @select="toggleDate"
+            />
           </div>
           <span>&nbsp;Click to flip cards between daily and season performance.</span>
         </p>
@@ -583,34 +597,6 @@ onBeforeRouteLeave(() => {
   gap: 0.5rem;
   flex-wrap: wrap;
   margin: 0.25rem 0 0.75rem;
-}
-
-.date-pill {
-  border: 1px solid var(--border-glow);
-  background: rgba(6, 12, 20, 0.6);
-  color: var(--text-secondary);
-  border-radius: 10px;
-  padding: 0.4rem 0.7rem;
-  font-family: 'Sora', sans-serif;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.date-pill:hover {
-  border-color: var(--accent-cyan);
-  color: var(--text-primary);
-}
-
-.date-pill.active {
-  border-color: var(--accent-gold);
-  background: rgba(255, 215, 0, 0.12);
-  color: var(--text-primary);
-  box-shadow: 0 0 8px rgba(255, 215, 0, 0.25);
-}
-
-.date-pill-day {
-  display: inline-block;
 }
 
 

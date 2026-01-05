@@ -2,6 +2,7 @@
 import { computed, inject, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import GameCard from '../components/GameCard.vue'
 import SettingsDrawer from '../components/SettingsDrawer.vue'
+import DatePill from '../components/DatePill.vue'
 import { useScheduleData } from '../composables/useScheduleData.js'
 import { useConferences } from '../composables/usePlayerData.js'
 import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFilters.js'
@@ -18,7 +19,7 @@ const localDateStringCache = new Map()
 
 const gender = inject('gender')
 const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
-const { games, meta, loading, error, loadSchedule } = useScheduleData()
+const { games, meta, loading, error, loadSchedule, toplinesByGame } = useScheduleData()
 const { conferences, loadConferences } = useConferences()
 
 const savedFilters = loadSharedFilters()
@@ -68,8 +69,11 @@ const filteredGames = computed(() => {
 
   return [...games.value]
     .map((game) => {
-      const mergedPlayers = getFilteredPlayers(game)
-      return { game, mergedPlayers }
+      const gameId = Number(game.game_id)
+      const rawToplines = (toplinesByGame.value instanceof Map && toplinesByGame.value.get(gameId)) || []
+      const toplineList = toplinesByGameFiltered.value.get(gameId) || []
+      const mergedPlayers = toplineList.length ? toplineList : getFilteredPlayers(game)
+      return { game, mergedPlayers, toplineList, rawToplines }
     })
     .filter(({ game, mergedPlayers }) => {
       const homeConf = game?.home?.conference
@@ -88,9 +92,11 @@ const filteredGames = computed(() => {
       if (statusSet.size && !statusSet.has(gStatus)) return false
       return true
     })
-    .map(({ game, mergedPlayers }) => ({
+    .map(({ game, mergedPlayers, toplineList, rawToplines }) => ({
       ...game,
-      featured_players: mergedPlayers
+      featured_players: mergedPlayers,
+      toplines_players: toplineList,
+      toplines_players_raw: rawToplines
     }))
     .sort((a, b) => {
       const t1 = a?.start_time ? new Date(a.start_time).getTime() : Number.POSITIVE_INFINITY
@@ -211,22 +217,6 @@ const buildDateOptions = (dates) => {
 }
 
 const dateOptions = computed(() => buildDateOptions(scheduleDates.value))
-
-const dateLabel = (dateStr) => {
-  const today = toLocalDateString(new Date())
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const tomorrowStr = toLocalDateString(tomorrow)
-  if (dateStr === today) return 'Today'
-  if (dateStr === tomorrowStr) return 'Tomorrow'
-  const d = parseLocalDate(dateStr)
-  return d ? d.toLocaleDateString('en-US', { weekday: 'short' }) : dateStr
-}
-
-const dateSubLabel = (dateStr) => {
-  const d = parseLocalDate(dateStr)
-  return d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : dateStr
-}
 
 const rankingsLabel = computed(() => {
   if (!meta.value?.rankings_date) return 'latest season rankings'
@@ -356,6 +346,25 @@ const seasonPlayerMap = computed(() => {
   return map
 })
 
+const toplinesByGameFiltered = computed(() => {
+  const classSet = new Set((selectedClasses.value || []).map((c) => c.toLowerCase()))
+  const confSet = new Set(selectedConferences.value || [])
+  const filterRsci = rsciOnly.value
+  const byGame = new Map()
+  if (!(toplinesByGame.value instanceof Map)) return byGame
+  toplinesByGame.value.forEach((players, gid) => {
+    const filtered = (players || []).filter((p) => {
+      const cls = (p.experience_display_value || p.class || '').toLowerCase()
+      if (classSet.size && !classSet.has(cls)) return false
+      if (filterRsci && !p.recruit_rank) return false
+      if (confSet.size && !confSet.has(p.team_conf)) return false
+      return true
+    })
+    if (filtered.length) byGame.set(gid, filtered)
+  })
+  return byGame
+})
+
 onMounted(async () => {
   await refreshScheduleDate()
   await loadData()
@@ -413,17 +422,13 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-if="dateOptions.length" class="date-pills">
-      <button
+      <DatePill
         v-for="d in dateOptions"
         :key="d"
-        type="button"
-        class="date-pill"
-        :class="{ active: scheduleDate === d }"
-        @click="scheduleDate = d"
-      >
-        <span class="date-pill-label">{{ dateLabel(d) }}</span>
-        <span class="date-pill-sub">{{ dateSubLabel(d) }}</span>
-      </button>
+        :date="d"
+        :active="scheduleDate === d"
+        @select="scheduleDate = $event"
+      />
     </div>
 
     <div class="sort-toggle">
@@ -478,6 +483,8 @@ onBeforeUnmount(() => {
         :selectedConferences="selectedConferences"
         :rankMap="rankMap"
         :season-players-map="seasonPlayerMap"
+        :toplines-players="game.toplines_players || []"
+        :toplines-raw="game.toplines_players_raw || []"
       />
       <p v-if="decoratedGames.length === 0" class="no-data">
         No games match these filters. Try adjusting conferences or toggles.
@@ -523,40 +530,6 @@ onBeforeUnmount(() => {
   gap: 0.5rem;
   flex-wrap: wrap;
   margin: 0.25rem 0 0.75rem 0;
-}
-
-.date-pill {
-  border: 1px solid var(--border-glow);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-secondary);
-  border-radius: 12px;
-  padding: 0.45rem 0.75rem;
-  cursor: pointer;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 110px;
-  transition: transform 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.date-pill:hover {
-  transform: translateY(-2px);
-}
-
-.date-pill.active {
-  border-color: rgba(0, 212, 255, 0.6);
-  color: var(--text-primary);
-  background: rgba(0, 212, 255, 0.12);
-}
-
-.date-pill-label {
-  font-weight: 800;
-  font-size: 0.95rem;
-}
-
-.date-pill-sub {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
 }
 
 .sort-toggle {
