@@ -5,7 +5,18 @@ import fs from 'fs'
 
 // Plugin to serve dagster data files
 function serveDataPlugin() {
-  const dataPath = path.resolve(__dirname, '../../dagster-jobs/data/web')
+  const dagsterHome = process.env.DAGSTER_HOME
+  const envDataPath = process.env.DATA_PATH
+
+  const candidates = [
+    envDataPath,
+    dagsterHome ? path.join(dagsterHome, 'data', 'web') : null,
+    path.resolve(__dirname, '../../dagster-jobs/.dagster_home/data/web'),
+    path.resolve(__dirname, '../../dagster-jobs/data/web'),
+  ].filter(Boolean)
+
+  const dataPath = candidates.find((p) => fs.existsSync(p)) || candidates[candidates.length - 1]
+  console.log('[serve-data] Using data path:', dataPath)
   
   return {
     name: 'serve-data',
