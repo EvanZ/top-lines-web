@@ -132,13 +132,16 @@ const gamePlayer = computed(() => {
   const entry = toplineMap.value.get(pid)
   if (!entry) return null
   const seasonRank = Number(activePlayer.value?.chip_display_rank ?? activePlayer.value?.class_rank ?? activePlayer.value?.display_rank)
+  const recruitRank = rsciRank(entry) ?? rsciRank(activePlayer.value)
   return {
     ...entry,
+    rsci_rank: recruitRank ?? entry.rsci_rank,
+    recruit_rank: entry.recruit_rank ?? recruitRank,
     display_rank:
       Number.isFinite(seasonRank) && seasonRank > 0
         ? seasonRank
         : entry.display_rank,
-    class_rank: entry.class_rank,
+    class_rank: entry.class_rank ?? entry.display_rank,
   }
 })
 
@@ -199,6 +202,11 @@ const playerRankLabel = (player) => {
   const rank = Number(player?.overall_rank)
   if (Number.isFinite(rank) && rank > 0) return `EZ #${rank}`
   return 'EZ N/R'
+}
+
+const rsciRank = (player) => {
+  const rank = Number(player?.recruit_rank ?? player?.rsci_rank)
+  return Number.isFinite(rank) && rank > 0 ? rank : null
 }
 
 const recordLabel = (team) => {
@@ -416,9 +424,9 @@ onUnmounted(() => {
             type="button"
             @click="openPlayer(player)"
           >
-            <div class="player-chip-inner" :style="chipBg(player)">
+            <div class="player-chip-inner" :class="{ rsci: !!rsciRank(player) }" :style="chipBg(player)">
               <div class="chip-rank">{{ player.chip_display_rank ?? player.chip_rank ?? player.display_rank ?? player.class_rank ?? player.overall_rank }}</div>
-              <div class="headshot" :style="{ backgroundImage: `url('${player.headshot || placeholder}')` }">
+              <div class="headshot" :class="{ rsci: !!rsciRank(player) }" :style="{ backgroundImage: `url('${player.headshot || placeholder}')` }">
                 <span v-if="!player.headshot" class="initials">
                   {{ (player.display_name || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() }}
                 </span>
@@ -426,7 +434,10 @@ onUnmounted(() => {
               <div class="player-copy">
                 <div class="player-name">#{{ player.jersey }} {{ player.display_name }}</div>
                 <div class="player-sub">
-                  {{ player.experience_abbreviation || '—' }} | {{ player.position_abbreviation || player.position || '—' }}
+                  <span class="class-pos">
+                    {{ player.experience_abbreviation || '—' }} | {{ player.position_abbreviation || player.position || '—' }}
+                  </span>
+                  <span v-if="rsciRank(player)" class="rsci-badge">#{{ rsciRank(player) }} RSCI</span>
                 </div>
                 <div v-if="player.ez_history?.length" class="sparkline-row">
                   <Sparkline :values="player.ez_history" :height="24" />
@@ -805,6 +816,11 @@ onUnmounted(() => {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.player-chip-inner.rsci {
+  border-color: var(--accent-gold);
+  box-shadow: 0 6px 18px rgba(255, 215, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 .chip-rank {
   position: absolute;
   top: 0.2rem;
@@ -833,7 +849,11 @@ onUnmounted(() => {
   border: 2px solid var(--border-glow);
   display: grid;
   place-items: center;
-  transition: box-shadow 0.25s ease, transform 0.2s ease;
+  transition: box-shadow 0.25s ease, transform 0.2s ease, filter 0.25s ease;
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.15));
 }
 
 .initials {
@@ -856,6 +876,27 @@ onUnmounted(() => {
 .player-sub {
   color: var(--text-secondary);
   font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.class-pos {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.rsci-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--accent-gold), #ff8800);
+  color: var(--bg-dark);
+  font-family: 'Sora', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
 }
 
 .sparkline-row {
@@ -863,8 +904,14 @@ onUnmounted(() => {
 }
 
 .player-chip:hover .headshot {
-  box-shadow: 0 0 0 2px var(--accent-cyan), 0 0 18px rgba(0, 212, 255, 0.35);
+  box-shadow: 0 0 0 2px var(--accent-cyan);
+  filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.5));
   transform: translateY(-2px);
+}
+
+.player-chip:hover .headshot.rsci {
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.55);
+  filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));
 }
 
 .rank-line {
