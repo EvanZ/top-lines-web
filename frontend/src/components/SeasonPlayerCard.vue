@@ -23,6 +23,16 @@
     return num == null ? '—' : num.toFixed(digits)
   }
   const teamLogo = computed(() => `https://a.espncdn.com/i/teamlogos/ncaa/500/${p.value.team_id}.png`)
+const classLabel = computed(() =>
+  p.value.experience_display_value ||
+  p.value.class ||
+  ''
+)
+const positionLabel = computed(() =>
+  p.value.position_display_name ||
+  p.value.position ||
+  ''
+)
   const birthplace = computed(() => p.value.city && p.value.state ? `${p.value.city}, ${p.value.state}` : null)
   const age = computed(() => p.value.age_at_draft ? (p.value.age_at_draft / 365.25).toFixed(1) : null)
   const initials = computed(() => {
@@ -107,7 +117,7 @@
         <div class="player-meta">
           {{ p.display_height }}<span v-if="p.display_weight">&nbsp;{{ p.display_weight }}</span><br>
           <span v-if="age">Age {{ age }}<br></span>
-          <span v-if="p.experience_display_value">{{ p.experience_display_value }} {{ p.position_display_name }}<br></span>
+          <span v-if="classLabel || positionLabel">{{ classLabel }} {{ positionLabel }}<br></span>
           <span v-if="birthplace">{{ birthplace }}<br></span>
           <span class="team">#{{ p.team_rank }} {{ p.team_location }} (SOS #{{ p.sos }})</span><br>
           {{ p.team_conf }}

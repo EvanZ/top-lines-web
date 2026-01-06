@@ -91,10 +91,18 @@ const seasonPlayer = computed(() => {
   return {
     ...p,
     display_rank: p.class_rank,
-    headshot_href: p.headshot,
+    headshot_href: p.headshot || p.headshot_href,
     rsci_rank: p.recruit_rank,
-    experience_display_value: p.class,
-    position_display_name: p.position,
+    experience_display_value: p.experience_display_value || p.class,
+    experience_display_name: p.experience_display_name || p.class,
+    position_display_name: p.position_display_name || p.position,
+    position: p.position || p.position_display_name,
+    display_height: p.display_height || p.height_display || p.height,
+    display_weight: p.display_weight || p.weight_display || p.weight,
+    city: p.city,
+    state: p.state,
+    country: p.country,
+    agency: p.agency,
     team_conf: p.team_conf,
     team_location: p.team_location,
     team_id: p.team_id,
@@ -209,8 +217,21 @@ const displayedPlayers = computed(() => {
   const sorted = [...featuredPlayers.value]
     .map((p, idx) => {
       const r = rank(p)
+      const playerClass =
+        p.class ||
+        p.experience_display_value ||
+        p.experience_display_name ||
+        p.experience_abbreviation ||
+        ''
+      const playerPosition =
+        p.position ||
+        p.position_display_name ||
+        p.position_abbreviation ||
+        ''
       return {
         ...p,
+        class: playerClass,
+        position: playerPosition,
         chip_rank: r,
         game_rank: p.game_rank ?? p.display_rank ?? p.class_rank,
         original_order: idx + 1,
@@ -395,25 +416,25 @@ onUnmounted(() => {
             type="button"
             @click="openPlayer(player)"
           >
-              <div class="player-chip-inner" :style="chipBg(player)">
+            <div class="player-chip-inner" :style="chipBg(player)">
               <div class="chip-rank">{{ player.chip_display_rank ?? player.chip_rank ?? player.display_rank ?? player.class_rank ?? player.overall_rank }}</div>
               <div class="headshot" :style="{ backgroundImage: `url('${player.headshot || placeholder}')` }">
                 <span v-if="!player.headshot" class="initials">
                   {{ (player.display_name || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() }}
                 </span>
               </div>
-            <div class="player-copy">
-              <div class="player-name">{{ player.display_name }}</div>
-              <div class="player-sub">
-                {{ player.position || '—' }} • {{ player.class || '—' }}
-              </div>
-              <div v-if="player.ez_history?.length" class="sparkline-row">
-                <Sparkline :values="player.ez_history" :height="24" />
+              <div class="player-copy">
+                <div class="player-name">#{{ player.jersey }} {{ player.display_name }}</div>
+                <div class="player-sub">
+                  {{ player.experience_abbreviation || '—' }} | {{ player.position_abbreviation || player.position || '—' }}
+                </div>
+                <div v-if="player.ez_history?.length" class="sparkline-row">
+                  <Sparkline :values="player.ez_history" :height="24" />
+                </div>
               </div>
             </div>
-          </div>
-        </button>
-      </div>
+          </button>
+        </div>
         <p v-else class="no-prospects">No ranked prospects matched for this game yet.</p>
       </div>
 
@@ -786,16 +807,16 @@ onUnmounted(() => {
 
 .chip-rank {
   position: absolute;
-  top: 0.3rem;
-  left: 0.35rem;
-  background: rgba(255, 255, 255, 0.08);
+  top: 0.2rem;
+  left: 0.15rem;
+  /* background: rgba(255, 255, 255, 0.08); */
   color: var(--accent-gold);
-  border-radius: 999px;
+  /* border-radius: 4px; */
   padding: 0.15rem 0.55rem;
   font-weight: 900;
-  font-size: 0.82rem;
-  border: 1px solid rgba(255, 215, 0, 0.45);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 0.92rem;
+  /* border: 1px solid rgba(255, 215, 0, 0.45); */
+  /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); */
 }
 
 .player-chip:hover .player-chip-inner {
@@ -827,9 +848,9 @@ onUnmounted(() => {
 }
 
 .player-name {
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
-  font-size: 0.98rem;
+  font-size: 0.9rem;
 }
 
 .player-sub {
