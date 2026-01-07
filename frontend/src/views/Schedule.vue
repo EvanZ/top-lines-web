@@ -23,7 +23,7 @@ const { games, meta, loading, error, loadSchedule, toplinesByGame } = useSchedul
 const { conferences, loadConferences } = useConferences()
 
 const savedFilters = loadSharedFilters()
-const scheduleDate = ref('')
+const scheduleDate = ref(typeof savedFilters.scheduleDate === 'string' ? savedFilters.scheduleDate : '')
 const scheduleDates = ref([])
 const seasonPlayers = ref([])
 const classes = ['freshman', 'sophomore', 'junior', 'senior']
@@ -384,7 +384,7 @@ watch(scheduleDate, async (next, prev) => {
 })
 
 watch(
-  [selectedClasses, rsciOnly, selectedConferences, onlyWithPlayers, sortAsc, scheduleStatuses],
+  [selectedClasses, rsciOnly, selectedConferences, onlyWithPlayers, sortAsc, scheduleStatuses, scheduleDate],
   () => {
     saveSharedFilters({
       selectedClasses: selectedClasses.value,
@@ -394,6 +394,7 @@ watch(
       onlyWithPlayers: onlyWithPlayers.value,
       sortAsc: sortAsc.value,
       scheduleStatuses: scheduleStatuses.value,
+      scheduleDate: scheduleDate.value,
     })
   },
   { deep: true }

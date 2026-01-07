@@ -342,7 +342,7 @@ watch(compareEnabled, (value) => {
   }
 })
 watch(
-  [selectedClasses, rsciOnly, selectedPosition, selectedConferences],
+  [selectedClasses, rsciOnly, selectedPosition, selectedConferences, selectedDates],
   () => {
     saveSharedFilters({
       selectedClasses: selectedClasses.value,
