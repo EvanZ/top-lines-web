@@ -124,10 +124,16 @@ const baseFilteredPlayers = computed(() => {
     
     return true
   })
-  if (selectedClasses.value.length > 1) {
-    return filtered.sort((a, b) => combinedRankScore(b) - combinedRankScore(a))
-  }
-  return filtered
+  return filtered.sort((a, b) => {
+    const diff = combinedRankScore(b) - combinedRankScore(a)
+    if (diff !== 0) return diff
+    const rankA = Number(a.game_rank)
+    const rankB = Number(b.game_rank)
+    if (Number.isFinite(rankA) && Number.isFinite(rankB) && rankA !== rankB) {
+      return rankA - rankB
+    }
+    return 0
+  })
 })
 
 const filteredSeasonPlayers = computed(() => {
