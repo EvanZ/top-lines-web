@@ -1,9 +1,11 @@
   <script setup>
   import { computed, ref, watch } from 'vue'
   import Sparkline from './Sparkline.vue'
+  import DownloadButton from './DownloadButton.vue'
   const props = defineProps({ 
     player: Object,
-    gender: { type: String, default: 'men' }
+    gender: { type: String, default: 'men' },
+    showDownload: { type: Boolean, default: true }
   })
   const p = computed(() => props.player)
   const fallbackHeadshot = new URL('../assets/player-placeholder.svg', import.meta.url).href
@@ -23,6 +25,14 @@
     return num == null ? '—' : num.toFixed(digits)
   }
   const teamLogo = computed(() => `https://a.espncdn.com/i/teamlogos/ncaa/500/${p.value.team_id}.png`)
+  const cardEl = ref(null)
+  const downloadName = computed(() => {
+    const safeName = (p.value.display_name || 'player')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'player'
+    return `${safeName}-season.png`
+  })
 const classLabel = computed(() =>
   p.value.experience_display_value ||
   p.value.class ||
@@ -87,8 +97,8 @@ const positionLabel = computed(() =>
   })
   </script>
   
-  <template>
-  <div class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(var(--card-overlay), var(--card-overlay)), url('${teamLogo}')` }">
+<template>
+  <div ref="cardEl" class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(var(--card-overlay), var(--card-overlay)), url('${teamLogo}')` }">
       <div class="card-rank-row">
         <span class="card-rank">{{ p.display_rank ?? p.class_rank }}</span>
         <div class="ez-scores">
@@ -111,8 +121,18 @@ const positionLabel = computed(() =>
             <img :src="headshotSrc" class="player-photo" :alt="p.display_name" @error="onHeadshotError">
             <span v-if="isFallbackHeadshot" class="player-initials">{{ initials }}</span>
           </span>
-          <div class="player-name-photo"><span class="jersey">#{{ p.jersey }}</span> {{ p.display_name }}</div>
-      </a>
+          <div class="player-name-photo">
+            <span class="jersey">#{{ p.jersey }}</span> {{ p.display_name }}
+          </div>
+        </a>
+        <DownloadButton
+          v-if="showDownload"
+          class="download-btn-inline"
+          :target="cardEl"
+          :filename="downloadName"
+          aria-label="Download player card"
+          title="Download player card as PNG"
+        />
       <div class="player-details">
         <div class="player-meta">
           {{ p.display_height }}<span v-if="p.display_weight">&nbsp;{{ p.display_weight }}</span><br>

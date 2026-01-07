@@ -150,6 +150,41 @@
   border-radius: 50%;
   overflow: hidden;
 }
+.after-name-slot {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+.download-btn-inline {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  margin-left: 0.0rem;
+  cursor: pointer;
+  font-size: 1.0rem;
+  vertical-align: middle;
+  padding: 0;
+  line-height: 1;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  border-radius: 0;
+  font-family: 'Sora', sans-serif;
+  font-variant-emoji: text;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.download-btn-inline:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.download-btn-inline:hover {
+  color: var(--accent-gold);
+  transition: all 0.1s ease;
+}
 .player-photo {
   width: 100px;
   height: 100px;

@@ -1,10 +1,12 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import Sparkline from './Sparkline.vue'
+import DownloadButton from './DownloadButton.vue'
 const props = defineProps({ 
   player: Object,
   gender: { type: String, default: 'men' },
-  showSeasonRank: { type: Boolean, default: false }
+  showSeasonRank: { type: Boolean, default: false },
+  showDownload: { type: Boolean, default: true }
 })
 const p = computed(() => props.player)
 const fallbackHeadshot = new URL('../assets/player-placeholder.svg', import.meta.url).href
@@ -50,6 +52,15 @@ const initials = computed(() => {
   if (!name) return '?'
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase()
 })
+const cardEl = ref(null)
+const downloadName = computed(() => {
+  const safeName = (p.value.display_name || 'player')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'player'
+  const dateLabel = p.value.date || 'card'
+  return `${safeName}-game-${dateLabel}.png`
+})
 
 watch(
   () => p.value?.headshot_href,
@@ -67,11 +78,19 @@ const onHeadshotError = () => {
 </script>
 
 <template>
-  <div class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(var(--card-overlay), var(--card-overlay)), url('${teamLogo}')` }">
+  <div ref="cardEl" class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(var(--card-overlay), var(--card-overlay)), url('${teamLogo}')` }">
     <div class="card-rank-row">
       <span class="card-rank">{{ p.display_rank ?? p.class_rank }}<span v-if="p.notable" class="notable-up">{{ p.notable }}</span></span>
       <span class="game-rank">#{{ p.game_rank }}/{{ p.games }}</span>
       <div class="card-rank-meta">
+        <DownloadButton
+        v-if="showDownload"
+        class="download-btn-inline"
+        :target="cardEl"
+        :filename="downloadName"
+        aria-label="Download player card"
+        title="Download player card as PNG"
+        />
         <span v-if="dateParts" class="game-date-badge">
           <span class="date-month">{{ dateParts.month }}</span>
           <span class="date-day">{{ dateParts.day }}</span>
@@ -93,7 +112,9 @@ const onHeadshotError = () => {
           <img :src="headshotSrc" class="player-photo" :alt="p.display_name" @error="onHeadshotError">
           <span v-if="isFallbackHeadshot" class="player-initials">{{ initials }}</span>
         </span>
-        <div class="player-name-photo"><span class="jersey">#{{ p.jersey }}</span> {{ p.display_name }}</div>
+        <div class="player-name-photo">
+          <span class="jersey">#{{ p.jersey }}</span> {{ p.display_name }}
+        </div>
       </a>
       <div class="player-details">
         <div class="player-meta">

@@ -459,14 +459,22 @@ onUnmounted(() => {
               key="season"
               class="season-card-wrapper flip-surface"
             >
-              <SeasonPlayerCard :player="seasonPlayer" :gender="gender" />
+              <SeasonPlayerCard :player="seasonPlayer" :gender="gender">
+                <template #after-name>
+                  <!-- download handled inside card -->
+                </template>
+              </SeasonPlayerCard>
             </div>
             <div
               v-else
               key="daily"
               class="season-card-wrapper flip-surface"
             >
-              <DailyPlayerCard :player="gamePlayer" :gender="gender" :show-season-rank="false" />
+              <DailyPlayerCard :player="gamePlayer" :gender="gender" :show-season-rank="false">
+                <template #after-name>
+                  <!-- download handled inside card -->
+                </template>
+              </DailyPlayerCard>
             </div>
           </transition>
         </div>
@@ -1019,6 +1027,40 @@ onUnmounted(() => {
   top: 0.5rem;
   right: 0.5rem;
   z-index: 2;
+}
+
+.download-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0.1rem;
+  cursor: pointer;
+  font-weight: 700;
+  align-self: flex-start;
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 2;
+}
+
+.download-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.download-btn-inline {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  margin-left: 0.4rem;
+  cursor: pointer;
+  font-size: 1rem;
+  vertical-align: middle;
+}
+
+.download-btn-inline:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 @media (max-width: 720px) {
