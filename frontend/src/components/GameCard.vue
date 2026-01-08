@@ -1011,7 +1011,8 @@ onUnmounted(() => {
 
 .season-card-wrapper {
   flex: 1;
-  overflow: auto;
+  overflow: visible;
+  padding: 0.25rem;
 }
 
 .close-btn {

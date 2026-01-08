@@ -97,9 +97,9 @@ const initials = computed(() => {
   max-width: 420px;
   min-width: 320px;
   background: var(--bg-dark);
-  border: 2px solid var(--border-glow);
-  border-radius: 12px;
-  padding: 1.75rem;
+  border: 0.1rem solid var(--border-glow);
+  border-radius: 6px;
+  padding: 1.0rem;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
@@ -124,7 +124,7 @@ const initials = computed(() => {
 .voting-card:hover {
   border-color: var(--accent-cyan);
   transform: scale(1.02);
-  box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
 }
 
 .voting-card:active {
@@ -133,7 +133,7 @@ const initials = computed(() => {
 
 .voting-card.rsci {
   border-color: var(--accent-gold);
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+  /* box-shadow: 0 0 5px rgba(255, 215, 0, 0.2); */
 }
 
 .voting-ez-badge {
@@ -197,9 +197,9 @@ const initials = computed(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
+  height: 1px;
   background: linear-gradient(90deg, var(--accent-gold), #ff8800);
-  border-radius: 10px 10px 0 0;
+  /* border-radius: 6px 6px 0 0; */
 }
 
 .voting-card.rsci:hover {

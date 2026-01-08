@@ -78,7 +78,12 @@ const onHeadshotError = () => {
 </script>
 
 <template>
-  <div ref="cardEl" class="player-card border-percentiles" :class="{ rsci: isRsci }" :style="{ backgroundImage: `linear-gradient(var(--card-overlay), var(--card-overlay)), url('${teamLogo}')` }">
+  <div
+    ref="cardEl"
+    class="player-card border-percentiles"
+    :class="{ rsci: isRsci }"
+    :style="{ '--card-bg-url': `url('${teamLogo}')` }"
+  >
     <div class="card-rank-row">
       <span class="card-rank">{{ p.display_rank ?? p.class_rank }}<span v-if="p.notable" class="notable-up">{{ p.notable }}</span></span>
       <span class="game-rank">#{{ p.game_rank }}/{{ p.games }}</span>

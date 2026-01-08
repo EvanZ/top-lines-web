@@ -1,38 +1,29 @@
 .player-card {
   background: var(--bg-card);
   border: 1px solid var(--border-glow);
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 1rem;
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
+  background-image: linear-gradient(var(--card-overlay), var(--card-overlay)), var(--card-bg-url, none);
   background-size: 50%;
   background-position: center;
   background-repeat: no-repeat;
-}
-.player-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
-  opacity: 0;
-  transition: opacity 0.3s ease;
 }
 .player-card:hover {
   transform: translateY(-3px);
   border-color: var(--accent-cyan);
   box-shadow: 0 10px 40px rgba(0, 212, 255, 0.15);
 }
-.player-card:hover::before { opacity: 1; }
 .player-card.rsci {
   border-color: var(--accent-gold);
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+  box-shadow: 10px 10px 20px rgba(255, 215, 0, 0.15);
 }
-.player-card.rsci::before {
-  background: linear-gradient(90deg, var(--accent-gold), #ff8800);
-  opacity: 1;
+.player-card.rsci:hover {
+  box-shadow: 0 0 10px rgba(255, 255, 0, 0.2);
 }
+
 .card-rank-row {
   display: flex;
   align-items: center;
@@ -133,8 +124,8 @@
 .card-player-info {
   display: flex;
   gap: 0.75rem;
-  margin-top: -0.9rem;
-  margin-bottom: 0.75rem;
+  margin-top: 0.2rem;
+  margin-bottom: 0.5rem;
   align-items: flex-start;
 }
 .player-link { text-decoration: none; text-align: center; }
@@ -238,8 +229,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 0.25rem;
-  margin-left: auto;
-  margin-top: 1.5rem;
+  margin: 0;
 }
 .rsci-badge {
   display: inline-block;
@@ -275,6 +265,25 @@
   border-radius: 3px;
   margin-top: 0.25rem;
   border: 1px solid var(--accent-cyan);
+}
+.badge-shot-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 0.35rem 0 0.15rem;
+  position: relative;
+  z-index: 1;
+}
+.shot-thumb-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 130px;
+  margin: 0.1rem 0 0.25rem;
+  padding: 0.25rem 0 0.2rem;
+  overflow: visible;
+  position: absolute;
+  z-index: 1;
 }
 .game-info {
   border-radius: 6px;
