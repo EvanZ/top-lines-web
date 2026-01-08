@@ -609,7 +609,7 @@ onBeforeRouteLeave(() => {
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1rem;
+  gap: 1.0rem;
   margin-top: 1rem;
 }
 
@@ -715,7 +715,7 @@ onBeforeRouteLeave(() => {
 
 .flip-card {
   position: relative;
-  max-height: 520px;
+  max-height: 480px;
   overflow: hidden;
   transition: max-height 0.5s ease;
 }

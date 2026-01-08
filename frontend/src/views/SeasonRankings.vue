@@ -303,7 +303,7 @@ onBeforeRouteLeave(() => {
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1rem;
+  gap: 1.0rem;
   margin-top: 1rem;
 }
 
