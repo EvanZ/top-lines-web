@@ -34,11 +34,13 @@
     return `${safeName}-season.png`
   })
 const classLabel = computed(() =>
+  p.value.experience_abbreviation ||
   p.value.experience_display_value ||
   p.value.class ||
   ''
 )
 const positionLabel = computed(() =>
+  p.value.position_abbreviation ||
   p.value.position_display_name ||
   p.value.position ||
   ''
@@ -130,6 +132,19 @@ const positionLabel = computed(() =>
             <span class="jersey">#{{ p.jersey }}</span> {{ p.display_name }}
           </div>
         </a>
+      <div class="player-details">
+        <div class="player-meta">
+          {{ p.display_height }}<span v-if="p.display_weight">&nbsp;{{ p.display_weight }}</span><br>
+          <span v-if="age">{{ age }}<br></span>
+          <span v-if="classLabel || positionLabel">{{ classLabel }} {{ positionLabel }}<br></span>
+          <span v-if="birthplace">{{ birthplace }}<br></span>
+          <span class="team">#{{ p.team_rank }} {{ p.team_location }}</span><br>
+          {{ p.team_conf }}
+        </div>
+      </div>
+      <div class="player-badges">
+        <span v-if="isRsci" class="rsci-badge">#{{ p.rsci_rank }} RSCI</span>
+        <span v-if="hasElo" class="elo-badge">Elo #{{ p.elo_rank }} • {{ p.elo_rating?.toFixed(0) }}</span>
         <DownloadButton
           v-if="showDownload"
           class="download-btn-inline"
@@ -138,19 +153,6 @@ const positionLabel = computed(() =>
           aria-label="Download player card"
           title="Download player card as PNG"
         />
-      <div class="player-details">
-        <div class="player-meta">
-          {{ p.display_height }}<span v-if="p.display_weight">&nbsp;{{ p.display_weight }}</span><br>
-          <span v-if="age">Age {{ age }}<br></span>
-          <span v-if="classLabel || positionLabel">{{ classLabel }} {{ positionLabel }}<br></span>
-          <span v-if="birthplace">{{ birthplace }}<br></span>
-          <span class="team">#{{ p.team_rank }} {{ p.team_location }} (SOS #{{ p.sos }})</span><br>
-          {{ p.team_conf }}
-        </div>
-      </div>
-      <div class="player-badges">
-        <span v-if="isRsci" class="rsci-badge">#{{ p.rsci_rank }} RSCI</span>
-        <span v-if="hasElo" class="elo-badge">Elo #{{ p.elo_rank }} • {{ p.elo_rating?.toFixed(0) }}</span>
       </div>
     </div>
       <table class="stats-table">

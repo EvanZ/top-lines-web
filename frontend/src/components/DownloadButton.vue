@@ -51,7 +51,7 @@ const handleClick = async () => {
     :title="title"
     @click.stop.prevent="handleClick"
   >
-  png<br>
+  <!-- png<br> -->
   &#8595;
   </button>
 </template>
