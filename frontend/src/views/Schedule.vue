@@ -350,6 +350,8 @@ const toplinesByGameFiltered = computed(() => {
   const classSet = new Set((selectedClasses.value || []).map((c) => c.toLowerCase()))
   const confSet = new Set(selectedConferences.value || [])
   const filterRsci = rsciOnly.value
+  const rankLookup = rankMap.value
+  const seasonLookup = seasonPlayerMap.value
   const byGame = new Map()
   if (!(toplinesByGame.value instanceof Map)) return byGame
   toplinesByGame.value.forEach((players, gid) => {
@@ -358,6 +360,11 @@ const toplinesByGameFiltered = computed(() => {
       if (classSet.size && !classSet.has(cls)) return false
       if (filterRsci && !p.recruit_rank) return false
       if (confSet.size && !confSet.has(p.team_conf)) return false
+      const pid = Number(p.player_id)
+      if (!Number.isFinite(pid)) return false
+      const hasSeason = seasonLookup?.has(pid)
+      const hasRank = rankLookup?.has(pid)
+      if (!hasSeason && !hasRank) return false
       return true
     })
     if (filtered.length) byGame.set(gid, filtered)
