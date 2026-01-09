@@ -47,6 +47,11 @@ const selectedConferences = ref(
 const powerOnly = ref(false)
 const onlyWithPlayers = ref(typeof savedFilters.onlyWithPlayers === 'boolean' ? savedFilters.onlyWithPlayers : true)
 const powerOrder = ['ACC', 'Big 12', 'Big Ten', 'SEC', 'Pac-12', 'Big East']
+const todayStr = computed(() => toLocalDateString(new Date()))
+const scheduleIsPast = computed(() => {
+  if (!scheduleDate.value) return false
+  return scheduleDate.value < todayStr.value
+})
 
 const filteredGames = computed(() => {
   const isPower = (conf) => powerOrder.includes(conf)
@@ -493,6 +498,7 @@ onBeforeUnmount(() => {
         :season-players-map="seasonPlayerMap"
         :toplines-players="game.toplines_players || []"
         :toplines-raw="game.toplines_players_raw || []"
+        :is-past-day="scheduleIsPast"
       />
       <p v-if="decoratedGames.length === 0" class="no-data">
         No games match these filters. Try adjusting conferences or toggles.

@@ -16,6 +16,7 @@ const props = defineProps({
   seasonPlayersMap: { type: Object, default: null },
   toplinesPlayers: { type: Array, default: () => [] },
   toplinesRaw: { type: Array, default: () => [] },
+  isPastDay: { type: Boolean, default: false },
 })
 
 const placeholder = new URL('../assets/player-placeholder.svg', import.meta.url).href
@@ -26,6 +27,7 @@ const odds = computed(() => props.game?.odds || null)
 const seasonPlayersMap = computed(() => (props.seasonPlayersMap instanceof Map ? props.seasonPlayersMap : null))
 const lazyToplines = ref([])
 const isPastGame = computed(() => {
+  if (props.isPastDay) return true
   const raw = props.game?.start_time
   if (!raw) return false
   const gameDate = new Date(raw)
@@ -212,6 +214,18 @@ const playerRankLabel = (player) => {
   const rank = Number(player?.overall_rank)
   if (Number.isFinite(rank) && rank > 0) return `EZ #${rank}`
   return 'EZ N/R'
+}
+
+const playerEzForBadge = (player) => {
+  const pid = Number(player?.player_id)
+  const topline = Number.isFinite(pid) ? toplineMap.value.get(pid) : null
+  const val =
+    topline?.ez_struct?.ez ??
+    topline?.ez ??
+    player?.ez_struct?.ez ??
+    player?.ez
+
+  return Number.isFinite(Number(val)) ? Number(val) : null
 }
 
 const rsciRank = (player) => {
@@ -445,9 +459,16 @@ onUnmounted(() => {
             :key="player.player_id"
             class="player-chip"
             type="button"
-            @click="openPlayer(player)"
-          >
+          @click="openPlayer(player)"
+        >
             <div class="player-chip-inner" :class="{ rsci: !!rsciRank(player) }" :style="chipBg(player)">
+              <span
+                v-if="isPastGame && playerEzForBadge(player) != null"
+                class="chip-ez-badge"
+                :title="`EZ for this game: ${playerEzForBadge(player).toFixed(1)}`"
+              >
+                {{ playerEzForBadge(player).toFixed(1) }}
+              </span>
               <div class="chip-rank">{{ player.chip_display_rank ?? player.chip_rank ?? player.display_rank ?? player.class_rank ?? player.overall_rank }}</div>
               <div class="headshot" :class="{ rsci: !!rsciRank(player) }" :style="{ backgroundImage: `url('${player.headshot || placeholder}')` }">
                 <span v-if="!player.headshot" class="initials">
@@ -850,6 +871,20 @@ onUnmounted(() => {
 .player-chip-inner.rsci {
   border-color: var(--accent-gold);
   box-shadow: 0 6px 18px rgba(255, 215, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.chip-ez-badge {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  background: rgba(255, 212, 0, 0.14);
+  color: #ffd400;
+  border: 1px solid rgba(255, 212, 0, 0.5);
+  border-radius: 8px;
+  padding: 0.1rem 0.4rem;
+  font-weight: 800;
+  font-size: 0.8rem;
+  line-height: 1;
 }
 
 .chip-rank {
