@@ -25,6 +25,16 @@ const away = computed(() => props.game?.away || {})
 const odds = computed(() => props.game?.odds || null)
 const seasonPlayersMap = computed(() => (props.seasonPlayersMap instanceof Map ? props.seasonPlayersMap : null))
 const lazyToplines = ref([])
+const isPastGame = computed(() => {
+  const raw = props.game?.start_time
+  if (!raw) return false
+  const gameDate = new Date(raw)
+  if (Number.isNaN(gameDate.getTime())) return false
+  const today = new Date()
+  const gameDay = gameDate.toISOString().slice(0, 10)
+  const todayDay = today.toISOString().slice(0, 10)
+  return gameDay < todayDay
+})
 const toplineDate = computed(() => {
   const raw = props.game?.start_time
   if (!raw) return null
@@ -216,13 +226,20 @@ const recordLabel = (team) => {
 }
 
 const displayedPlayers = computed(() => {
+  const toplineIds = new Set(toplineMap.value.keys())
+  const hasToplines = toplineIds.size > 0
+
   const rankLookup = props.rankMap instanceof Map ? props.rankMap : null
   const rank = (p) => {
     const pid = Number(p.player_id)
     const lookupRank = rankLookup ? rankLookup.get(pid) : undefined
     return lookupRank ?? p.display_rank ?? p.class_rank ?? p.overall_rank ?? 1e6
   }
-  const sorted = [...featuredPlayers.value]
+  const filtered = isPastGame.value && hasToplines
+    ? featuredPlayers.value.filter((p) => toplineIds.has(Number(p.player_id)))
+    : featuredPlayers.value
+
+  const sorted = [...filtered]
     .map((p, idx) => {
       const r = rank(p)
       const playerClass =
@@ -272,6 +289,12 @@ const ensureToplinesLoaded = async () => {
     console.warn('Toplines fetch failed in card', err)
   }
 }
+
+onMounted(() => {
+  if (isPastGame.value) {
+    ensureToplinesLoaded()
+  }
+})
 
 const openPlayer = async (player) => {
   await ensureToplinesLoaded()
