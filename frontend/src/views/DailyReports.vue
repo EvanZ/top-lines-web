@@ -9,6 +9,8 @@ import DatePill from '../components/DatePill.vue'
 import { usePlayerData, useConferences } from '../composables/usePlayerData.js'
 import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFilters.js'
 
+const DISPLAY_LIMIT = 500
+
 const { players, meta, loading, error, loadTopLinesByDates } = usePlayerData()
 const { conferences, loadConferences } = useConferences()
 const dataBase = (import.meta.env.VITE_DATA_BASE || '/data').replace(/\/$/, '')
@@ -188,8 +190,10 @@ const visiblePlayers = computed(() => {
   return filteredPlayers.value.filter(player => rankedIds.has(player.player_id))
 })
 
+const limitedPlayers = computed(() => visiblePlayers.value.slice(0, DISPLAY_LIMIT))
+
 const rankedPlayers = computed(() => (
-  visiblePlayers.value.map((player, idx) => ({
+  limitedPlayers.value.map((player, idx) => ({
     ...player,
     display_rank: idx + 1,
     season_rank: seasonRankMap.value.get(player.player_id) ?? null
@@ -333,7 +337,7 @@ watch(selectedClasses, () => {
   selectedCompare.value = []
 }, { deep: true })
 watch(baseFilteredPlayers, (list) => {
-  const allowed = new Set(list.map(playerKey))
+  const allowed = new Set(limitedPlayers.value.map(playerKey))
   selectedCompare.value = selectedCompare.value.filter(key => allowed.has(key))
 })
 watch(compareEnabled, (value) => {
@@ -486,7 +490,7 @@ onBeforeRouteLeave(() => {
     </div>
     
     <div v-if="!loading && players.length > 0" class="results-count">
-      Showing {{ visiblePlayers.length }} of {{ players.length }} total players
+      Showing top {{ limitedPlayers.length }} of {{ filteredPlayers.length }} filtered players ({{ players.length }} total)
     </div>
 
   </div>
