@@ -16,7 +16,17 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selectedClasses'])
 
-const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1,2).toLowerCase()
+const formatClass = (str) => {
+  const lower = String(str || '').toLowerCase()
+  const labels = {
+    freshman: 'Fr',
+    sophomore: 'So',
+    junior: 'Jr',
+    senior: 'Sr'
+  }
+  if (labels[lower]) return labels[lower]
+  return lower ? `${lower[0].toUpperCase()}${(lower[1] || '').toLowerCase()}` : ''
+}
 
 const toggleClass = (cls) => {
   if (props.disabled) return
@@ -40,7 +50,7 @@ const toggleClass = (cls) => {
       :disabled="disabled"
       @click="toggleClass(cls)"
     >
-      {{ capitalize(cls) }}
+      {{ formatClass(cls) }}
     </button>
   </div>
 </template>
@@ -89,6 +99,5 @@ const toggleClass = (cls) => {
   color: var(--bg-dark);
 }
 </style>
-
 
 
