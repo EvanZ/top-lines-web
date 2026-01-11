@@ -210,6 +210,20 @@ const selectedDateLabel = computed(() => {
 const toplineDateOptions = computed(() => availableToplineDates.value || [])
 const visibleToplineDates = computed(() => toplineDateOptions.value.slice(0, 7))
 
+const applyQuickRange = (kind) => {
+  const dates = toplineDateOptions.value
+  if (!dates.length) return
+  if (kind === 'Y') {
+    const mostRecent = dates[0]
+    selectedDates.value = mostRecent ? [mostRecent] : []
+    return
+  }
+  const lengthMap = { L2: 2, L3: 3, L7: 7 }
+  const take = lengthMap[kind] || 0
+  if (!take) return
+  selectedDates.value = dates.slice(0, take)
+}
+
 const toggleDate = (dateStr) => {
   if (!dateStr) return
   const current = new Set(selectedDates.value)
@@ -429,6 +443,12 @@ onBeforeRouteLeave(() => {
               @select="toggleDate"
             />
           </div>
+          <div class="quick-pill-row" v-if="toplineDateOptions.length">
+            <button type="button" class="quick-pill" @click="applyQuickRange('Y')">Y</button>
+            <button type="button" class="quick-pill" @click="applyQuickRange('L2')">L2</button>
+            <button type="button" class="quick-pill" @click="applyQuickRange('L3')">L3</button>
+            <button type="button" class="quick-pill" @click="applyQuickRange('L7')">L7</button>
+          </div>
           <span>&nbsp;Click to flip cards between daily and season performance.</span>
         </p>
       </div>
@@ -629,6 +649,32 @@ onBeforeRouteLeave(() => {
   gap: 0.5rem;
   flex-wrap: wrap;
   margin: 0.25rem 0 0.75rem;
+}
+
+.quick-pill-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.75rem;
+}
+
+.quick-pill {
+  border: 1px solid var(--border-glow);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: 12px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  min-width: 60px;
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  transition: transform 0.15s ease, border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.quick-pill:hover {
+  transform: translateY(-2px);
+  background: rgba(0, 212, 255, 0.12);
+  border-color: var(--accent-cyan);
 }
 
 
