@@ -208,6 +208,7 @@ const selectedDateLabel = computed(() => {
 })
 
 const toplineDateOptions = computed(() => availableToplineDates.value || [])
+const visibleToplineDates = computed(() => toplineDateOptions.value.slice(0, 7))
 
 const toggleDate = (dateStr) => {
   if (!dateStr) return
@@ -310,24 +311,45 @@ const refreshAvailableDate = async () => {
     if (!response.ok) throw new Error(`Manifest HTTP ${response.status}`)
     const manifest = await response.json()
     const key = gender.value || 'men'
-    const dailyList = manifest?.[key]?.toplines || manifest?.[key]?.daily || []
+    let dailyList = manifest?.[key]?.toplines || manifest?.[key]?.daily || []
     const rankingsList = manifest?.[key]?.rankings || []
-    availableDate.value = dailyList[0] || manifest?.latest_date || availableDate.value
+    if (!dailyList.length && manifest?.latest_date) {
+      dailyList = [manifest.latest_date]
+    }
+    if (!dailyList.length) {
+      const today = new Date().toISOString().slice(0, 10)
+      dailyList = [today]
+    }
+    availableDate.value = dailyList[0] || availableDate.value
     availableToplineDates.value = dailyList
+    const allowed = new Set(visibleToplineDates.value)
     if (!selectedDates.value.length) {
-      selectedDates.value = dailyList.slice(0, 1)
+      selectedDates.value = visibleToplineDates.value.slice(0, 1)
     } else {
-      const allowed = new Set(dailyList)
       const filtered = selectedDates.value.filter((d) => allowed.has(d))
-      selectedDates.value = filtered.length ? filtered : dailyList.slice(0, 1)
+      selectedDates.value = filtered.length ? filtered : visibleToplineDates.value.slice(0, 1)
     }
     availableRankingsDate.value = rankingsList[0] || manifest?.latest_date || availableRankingsDate.value
   } catch (e) {
     console.error('Error loading manifest for daily reports:', e)
+    if (!selectedDates.value.length) {
+      const today = new Date().toISOString().slice(0, 10)
+      availableToplineDates.value = [today]
+      selectedDates.value = [today]
+    }
   }
 }
 
 watch(selectedDates, reloadData)
+watch(toplineDateOptions, () => {
+  const allowed = new Set(visibleToplineDates.value)
+  const filtered = selectedDates.value.filter((d) => allowed.has(d))
+  if (!filtered.length) {
+    selectedDates.value = visibleToplineDates.value.slice(0, 1)
+  } else if (filtered.length !== selectedDates.value.length) {
+    selectedDates.value = filtered
+  }
+})
 watch(gender, async () => {
   await refreshAvailableDate()
   await reloadData()
@@ -398,9 +420,9 @@ onBeforeRouteLeave(() => {
         <h1 class="page-title">Noteworthy Performances</h1>
         <p class="page-subtitle">
           <!-- <span v-if="selectedDateLabel">for {{ selectedDateLabel }}.</span> -->
-          <div class="date-pill-row" v-if="toplineDateOptions.length">
+          <div class="date-pill-row" v-if="visibleToplineDates.length">
             <DatePill
-              v-for="d in toplineDateOptions.slice(0,7)"
+              v-for="d in visibleToplineDates"
               :key="d"
               :date="d"
               :active="selectedDates.includes(d)"

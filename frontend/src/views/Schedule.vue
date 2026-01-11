@@ -262,10 +262,11 @@ const refreshScheduleDate = async () => {
     scheduleDates.value = scheduleList
     const options = buildDateOptions(scheduleList)
     const today = toLocalDateString(new Date())
+    const latest = options[options.length - 1]
     const preferred = scheduleDate.value && options.includes(scheduleDate.value)
       ? scheduleDate.value
-      : options.find((d) => d === today) || options[0]
-    scheduleDate.value = preferred || scheduleDate.value || today
+      : options.find((d) => d === today) || latest
+    scheduleDate.value = preferred || latest || scheduleDate.value || today
   } catch (e) {
     console.error('Error loading manifest for schedule:', e)
     if (!scheduleDate.value) {
