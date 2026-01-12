@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Top Lines</title>
+  <desc id="desc">Sparkline icon for Top Lines NBA draft tracker</desc>
+  <defs>
+    <linearGradient id="bg" x1="10" y1="6" x2="54" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#0a0e1a"/>
+    </linearGradient>
+    <linearGradient id="border" x1="8" y1="8" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00d4ff" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#ffd700" stop-opacity="0.6"/>
+    </linearGradient>
+    <linearGradient id="line" x1="12" y1="44" x2="52" y2="18" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00d4ff"/>
+      <stop offset="0.55" stop-color="#00f0c2"/>
+      <stop offset="1" stop-color="#ffd700"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <rect x="5" y="5" width="54" height="54" rx="12" stroke="url(#border)" stroke-width="1.5" fill="none"/>
+  <path d="M14 48c9-10 18-16 32-22c5-2 9-3 12-3V12c-2.8-1.3-5.8-2-8.8-2H14z" fill="#00d4ff" opacity="0.08"/>
+  <path d="M12 44L22.5 34L31 38L42 26L52 18" stroke="url(#line)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="12" cy="44" r="3" fill="#00d4ff"/>
+  <circle cx="22.5" cy="34" r="3" fill="#00e6ff"/>
+  <circle cx="31" cy="38" r="3" fill="#00f0c2"/>
+  <circle cx="42" cy="26" r="3" fill="#7ff59a"/>
+  <circle cx="52" cy="18" r="3" fill="#ffd700"/>
+</svg>
