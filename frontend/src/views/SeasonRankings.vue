@@ -4,6 +4,7 @@ import { onBeforeRouteLeave } from 'vue-router'
 import SeasonPlayerCard from '../components/SeasonPlayerCard.vue'
 import SettingsDrawer from '../components/SettingsDrawer.vue'
 import CompareToggle from '../components/CompareToggle.vue'
+import BaseToggle from '../components/BaseToggle.vue'
 import { usePlayerData, useConferences } from '../composables/usePlayerData.js'
 import { loadSharedFilters, saveSharedFilters } from '../composables/useSharedFilters.js'
 
@@ -20,6 +21,7 @@ const compareEnabled = ref(false)
 const selectedCompare = ref([])
 const selectedConferences = ref([])
 const selectedPosition = ref('')
+const sortByEz75 = ref(false)
 const availableDate = ref('2025-12-23') // Latest available date
 
 const classes = ['freshman', 'sophomore', 'junior', 'senior']
@@ -37,18 +39,39 @@ if (typeof savedFilters.selectedPosition === 'string') {
 if (Array.isArray(savedFilters.selectedConferences)) {
   selectedConferences.value = savedFilters.selectedConferences
 }
+if (typeof savedFilters.sortByEz75 === 'boolean') {
+  sortByEz75.value = savedFilters.sortByEz75
+}
 
 const selectedClassLabel = computed(() => {
   if (selectedClasses.value.length === 1) return selectedClasses.value[0]
   return 'selected classes'
 })
 
-const combinedRankScore = (player) => {
-  const gp = Number(player.gp)
-  const ez = Number(player.ez)
-  if (!Number.isFinite(gp) || gp <= 0) return 0
-  return Number.isFinite(ez) ? ez / gp : 0
+const safeNumber = (value) => {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : null
 }
+
+const ezPerGameScore = (player) => {
+  const ez = safeNumber(player.ez)
+  const gp = safeNumber(player.gp)
+  if (ez == null || gp == null || gp <= 0) return 0
+  return ez / gp
+}
+
+const ez75Score = (player) => {
+  const ez = safeNumber(player.ez)
+  const teamPoss = safeNumber(player.team_poss)
+  const minutes = safeNumber(player.minutes)
+  const teamMinutes = safeNumber(player.team_minutes)
+  if (ez == null || teamPoss == null || minutes == null || teamMinutes == null || teamMinutes === 0) return 0
+  const paceFactor = teamPoss * (minutes / teamMinutes)
+  if (!paceFactor) return 0
+  return (ez / paceFactor) * 75
+}
+
+const sortScore = (player) => (sortByEz75.value ? ez75Score(player) : ezPerGameScore(player))
 
 const baseFilteredPlayers = computed(() => {
   const selected = new Set(selectedClasses.value)
@@ -62,10 +85,13 @@ const baseFilteredPlayers = computed(() => {
       return true
     })
     .sort((a, b) => {
-      if (selectedClasses.value.length > 1) {
-        return combinedRankScore(b) - combinedRankScore(a)
-      }
-      return a.class_rank - b.class_rank
+      const primary = sortScore(b) - sortScore(a)
+      if (Number.isFinite(primary) && primary !== 0) return primary
+      const aRank = Number(a.class_rank)
+      const bRank = Number(b.class_rank)
+      const safeARank = Number.isFinite(aRank) ? aRank : Number.POSITIVE_INFINITY
+      const safeBRank = Number.isFinite(bRank) ? bRank : Number.POSITIVE_INFINITY
+      return safeARank - safeBRank
     })
 })
 
@@ -161,13 +187,14 @@ watch(compareEnabled, (value) => {
   }
 })
 watch(
-  [selectedClasses, rsciOnly, selectedPosition, selectedConferences],
+  [selectedClasses, rsciOnly, selectedPosition, selectedConferences, sortByEz75],
   () => {
     saveSharedFilters({
       selectedClasses: selectedClasses.value,
       rsciOnly: rsciOnly.value,
       selectedPosition: selectedPosition.value,
-      selectedConferences: selectedConferences.value
+      selectedConferences: selectedConferences.value,
+      sortByEz75: sortByEz75.value
     })
   },
   { deep: true }
@@ -210,6 +237,21 @@ onBeforeRouteLeave(() => {
         <p class="page-subtitle">
           Season rankings last updated on <span v-if="endDate">{{ endDate }}</span>.
         </p>
+      </div>
+    </div>
+
+    <div class="sort-row">
+      <div class="sort-toggle">
+        <BaseToggle
+          v-model="sortByEz75"
+          aria-label="Toggle EZ75 sorting"
+        />
+        <div class="sort-toggle-text">
+          <span class="toggle-label" :class="{ active: sortByEz75 }">Sort by EZ75</span>
+          <span class="toggle-hint">
+            {{ sortByEz75 ? 'Using pace-adjusted EZ75 rating' : 'Default: EZ game score' }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -297,6 +339,44 @@ onBeforeRouteLeave(() => {
   color: var(--text-secondary);
   font-size: 1rem;
   margin: 0;
+}
+
+.sort-row {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.sort-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.25rem 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.sort-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.toggle-label {
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.toggle-label.active {
+  color: var(--accent-cyan);
+}
+
+.toggle-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 
@@ -469,6 +549,15 @@ onBeforeRouteLeave(() => {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+  }
+
+  .sort-row {
+    width: 100%;
+  }
+
+  .sort-toggle {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>
